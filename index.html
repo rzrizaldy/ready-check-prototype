@@ -3,1010 +3,848 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Ready-Check Agent Prototype</title>
+<title>Ready-Check Prototype</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
+/* Design tokens: taken from pittsburghpa.gov (Outfit, navy #233b77, gold #f8bd32, pale blue #eaf1fc) */
 :root{
-  --navy:#13233A; --ink:#0B1626; --cream:#F3EFE6; --paper:#FBF9F4; --white:#FFFFFF;
-  --orange:#E8590C; --orange-dk:#B5400A; --orange-lt:#FDEBDF;
-  --yellow:#F2B705; --yellow-lt:#FFF4CC;
-  --green:#2E7D4F; --green-lt:#3FB673; --green-bg:#EAF3EC;
-  --blue:#1E4C86; --blue-grid:#2A5C9A; --line-lt:#EAF1FB; --sky:#8DB3E0;
-  --gray:#4B4F55; --rule:#D9D4CA;
-  --cond:'Barlow Condensed', 'Arial Narrow', Arial, sans-serif;
-  --sans:'Barlow', Arial, sans-serif;
-  --mono:'IBM Plex Mono', 'Courier New', monospace;
+  --navy:#233b77; --navy-dk:#1a2c5a; --navy-md:#345d96; --link:#183e6e;
+  --gold:#f8bd32; --gold-lt:#fef6e0; --gold-dk:#8a5d00;
+  --sky:#eaf1fc; --bg:#f8f8f8; --white:#fff;
+  --ink:#1f1f1f; --text2:#505050; --line:#dddddd;
+  --green:#1e7b45; --green-lt:#e7f4ec;
+  --red:#b42318; --red-lt:#fdecea;
+  --sans:'Outfit', Arial, sans-serif;
+  --mono:'Roboto Mono', 'Courier New', monospace;
+  --r:10px;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-html,body{background:var(--cream);color:var(--navy);font-family:var(--sans);font-size:16px;line-height:1.4}
+[hidden]{display:none !important}
+html,body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.5}
 button{font:inherit;cursor:pointer;border:none;background:none;color:inherit}
 button:disabled{cursor:not-allowed}
+a{color:var(--link)}
 .mono{font-family:var(--mono)}
-.cond{font-family:var(--cond);text-transform:uppercase;font-weight:700;letter-spacing:.2px}
-.ph{border-bottom:1.5px dotted var(--orange-dk);cursor:help}
-.ph::after{content:"";}
+.ph{border-bottom:1.5px dotted var(--text2);cursor:help}
+.muted{color:var(--text2)}
+.small{font-size:14px}
 
-/* ---------- Title block header ---------- */
-header.tb{display:grid;grid-template-columns:auto 1fr auto;border-bottom:2px solid var(--navy);background:var(--paper)}
-.tb-cell{padding:10px 18px;border-right:1px solid var(--navy);display:flex;flex-direction:column;justify-content:center}
-.tb-cell:last-child{border-right:none}
-.tb-label{font-family:var(--mono);font-size:11px;letter-spacing:1px;color:var(--gray);text-transform:uppercase}
-.tb-title{font-family:var(--cond);font-weight:700;font-size:26px;text-transform:uppercase;line-height:1}
-.tb-sim{font-family:var(--mono);font-size:12px;color:var(--orange-dk);font-weight:500}
-nav.sheets{display:flex;align-items:stretch;overflow-x:auto}
-nav.sheets button{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:8px 16px;border-right:1px solid var(--rule);min-width:150px;text-align:left;position:relative}
-nav.sheets button .n{font-family:var(--mono);font-size:11px;color:var(--gray)}
-nav.sheets button .t{font-family:var(--cond);font-weight:600;font-size:18px;text-transform:uppercase;line-height:1.05}
-nav.sheets button .who{font-family:var(--mono);font-size:11px;color:var(--gray)}
-nav.sheets button[aria-current="true"]{background:var(--navy);color:var(--cream)}
-nav.sheets button[aria-current="true"] .n, nav.sheets button[aria-current="true"] .who{color:var(--sky)}
-nav.sheets button .badge{position:absolute;top:6px;right:8px;font-family:var(--mono);font-size:11px;background:var(--orange);color:var(--navy);padding:0 5px;font-weight:500}
-.tb-actions{display:flex;gap:8px;align-items:center}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 16px;font-weight:600;font-size:15px;border:2px solid var(--navy);background:var(--paper);color:var(--navy);border-radius:4px;transition:background .15s, opacity .15s}
-.btn:hover:not(:disabled){background:var(--cream)}
-.btn.primary{background:var(--navy);color:var(--cream)}
-.btn.primary:hover:not(:disabled){background:#1d3352}
-.btn.orange{background:var(--orange);border-color:var(--orange);color:var(--navy)}
-.btn.orange:hover:not(:disabled){background:#f06a20}
-.btn.small{padding:6px 10px;font-size:13px}
-.btn:disabled{opacity:.38}
-.btn.ghost{border-color:transparent;text-decoration:underline;padding:6px 8px}
+/* ---------- Buttons, pills ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:11px 18px;font-weight:600;font-size:16px;border:1.5px solid var(--navy);background:var(--white);color:var(--navy);border-radius:8px;transition:background .15s, opacity .15s}
+.btn:hover:not(:disabled){background:var(--sky)}
+.btn.primary{background:var(--navy);color:#fff}
+.btn.primary:hover:not(:disabled){background:var(--navy-dk)}
+.btn.gold{background:var(--gold);border-color:var(--gold);color:var(--ink)}
+.btn.gold:hover:not(:disabled){background:#f5b11a}
+.btn.sm{padding:7px 12px;font-size:14px}
+.btn.block{width:100%}
+.btn:disabled{opacity:.4}
+.pill{display:inline-block;font-size:13px;font-weight:600;padding:2px 10px;border-radius:999px;white-space:nowrap}
+.p-ok{background:var(--green-lt);color:var(--green)}
+.p-miss{background:var(--red-lt);color:var(--red)}
+.p-eye{background:var(--gold-lt);color:var(--gold-dk)}
+.p-wait{background:#eee;color:var(--text2)}
+.p-info{background:var(--sky);color:var(--navy)}
 
-main{max-width:1440px;margin:0 auto;padding:24px 24px 40px}
-.sheet{display:none}
-.sheet.on{display:block;animation:fadein .25s ease}
-@keyframes fadein{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
-.sheet-head{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;margin-bottom:18px;flex-wrap:wrap}
-.kicker{font-family:var(--mono);font-size:13px;letter-spacing:1.5px;color:var(--orange-dk);font-weight:500;text-transform:uppercase}
-h1.sheet-title{font-family:var(--cond);font-weight:700;font-size:44px;line-height:1;text-transform:uppercase}
-.lede{font-size:17px;color:var(--gray);max-width:640px;margin-top:6px}
-.legend{display:flex;gap:16px;flex-wrap:wrap}
-.legend span{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:12px;color:var(--gray)}
-.legend i{display:inline-block;width:14px;height:14px}
+/* ---------- Top bar ---------- */
+header.top{background:var(--white);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
+.top-in{max-width:1360px;margin:0 auto;padding:10px 24px;display:flex;align-items:center;gap:24px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink)}
+.brand b{display:block;font-size:20px;font-weight:700;letter-spacing:2px;line-height:1}
+.brand span{display:block;font-size:12px;letter-spacing:1.5px;color:var(--text2);text-transform:uppercase}
+.roles{display:flex;gap:4px;background:var(--sky);padding:4px;border-radius:12px;margin-left:auto}
+.roles button{padding:8px 16px;border-radius:9px;font-weight:600;font-size:15px;color:var(--navy);display:flex;align-items:center;gap:8px}
+.roles button[aria-selected="true"]{background:var(--navy);color:#fff}
+.roles .dotn{min-width:20px;height:20px;border-radius:10px;background:var(--gold);color:var(--ink);font-size:12px;display:inline-flex;align-items:center;justify-content:center;padding:0 6px}
+.top-right{display:flex;align-items:center;gap:10px}
+.simtag{font-size:13px;color:var(--text2)}
 
-/* ---------- Drawing-style notes rows ---------- */
-.notes{border-top:2px solid var(--navy);border-bottom:2px solid var(--navy);background:var(--paper)}
-.notes-head{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-bottom:1px solid var(--navy)}
-.notes-head .cond{font-size:20px}
-.notes-head .mono{font-size:12px;color:var(--gray)}
-.nrow{display:grid;grid-template-columns:44px 1fr auto;gap:0;border-bottom:1px solid var(--rule);align-items:stretch}
-.nrow:last-child{border-bottom:none}
-.nrow > .num{font-family:var(--mono);font-size:13px;font-weight:500;padding:10px 0 10px 12px;color:var(--orange-dk)}
-.nrow > .body{padding:9px 12px;display:flex;flex-direction:column;gap:2px;border-left:1px solid var(--rule)}
-.nrow .t{font-weight:600;font-size:15px;line-height:1.25}
-.nrow .s{font-size:13px;color:var(--gray);line-height:1.3}
-.nrow .src{font-family:var(--mono);font-size:11.5px;color:var(--gray)}
-.nrow > .tag{padding:9px 12px;border-left:1px solid var(--rule);display:flex;align-items:center;font-family:var(--mono);font-size:12px;font-weight:500;white-space:nowrap}
-.nrow.clickable{cursor:pointer}
-.nrow.clickable:hover{background:var(--cream)}
-.nrow.sel{background:var(--yellow-lt)}
-.st-ok{color:var(--green)} .st-miss{color:var(--orange-dk)} .st-eye{color:#8a6a00} .st-wait{color:var(--gray)}
-.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:middle}
+/* ---------- Guide band ---------- */
+.guide{background:var(--sky)}
+.guide-in{max-width:1360px;margin:0 auto;padding:12px 24px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.guide .step{font-family:var(--mono);font-size:13px;background:var(--white);border:1px solid var(--line);border-radius:6px;padding:2px 8px;color:var(--navy)}
+.guide .txt{font-size:17px;font-weight:500;flex:1;min-width:240px}
 
-/* ---------- Layout helpers ---------- */
-.grid2{display:grid;grid-template-columns:400px 1fr;gap:32px;align-items:start}
-.grid-plan{display:grid;grid-template-columns:1fr 420px;gap:0;border:2px solid var(--navy);background:var(--paper)}
-.stack{display:flex;flex-direction:column;gap:16px}
-.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-.storyline{margin-top:22px;display:grid;grid-template-columns:auto 1fr auto;border-top:1px solid var(--navy);border-bottom:1px solid var(--navy);align-items:center}
-.storyline .lbl{font-family:var(--mono);font-size:12px;padding:10px 14px;border-right:1px solid var(--navy);color:var(--gray)}
-.storyline .txt{padding:10px 14px;font-size:15px}
-.storyline .go{padding:6px 10px}
+main{max-width:1360px;margin:0 auto;padding:24px}
+.view{display:none}
+.view.on{display:block;animation:fade .2s ease}
+@keyframes fade{from{opacity:0}to{opacity:1}}
 
-/* ---------- Phone ---------- */
-.phone{width:380px;height:760px;background:var(--ink);border-radius:46px;padding:12px;box-shadow:0 18px 40px rgba(11,22,38,.18);position:relative;flex-shrink:0}
-.screen{width:100%;height:100%;background:#F7F5F0;border-radius:36px;overflow:hidden;display:flex;flex-direction:column;position:relative}
-.statusbar{display:flex;justify-content:space-between;padding:12px 26px 4px;font-family:var(--mono);font-size:12px;background:var(--navy);color:var(--cream)}
-.apphead{background:var(--navy);color:var(--cream);padding:6px 20px 12px;display:flex;justify-content:space-between;align-items:flex-end}
-.apphead .cond{font-size:24px}
-.apphead .mono{font-size:12px;color:var(--yellow)}
-.appbody{flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
-.appfoot{padding:12px 16px 18px;border-top:1px solid var(--rule);background:#F7F5F0}
-.appfoot .btn{width:100%}
-.q{font-family:var(--cond);font-weight:700;font-size:30px;text-transform:uppercase;line-height:1}
-.summary{border-top:1px solid var(--navy);border-bottom:1px solid var(--navy)}
-.summary div{display:grid;grid-template-columns:96px 1fr;font-size:13.5px;border-bottom:1px solid var(--rule);padding:6px 0}
-.summary div:last-child{border-bottom:none}
-.summary b{font-family:var(--mono);font-weight:500;font-size:11px;color:var(--gray);text-transform:uppercase;padding-top:2px}
-.chk{display:grid;grid-template-columns:28px 1fr;gap:6px;padding:8px 0;border-bottom:1px solid var(--rule);font-size:14px;opacity:0;transform:translateY(4px);transition:opacity .3s, transform .3s}
+/* ---------- Cards ---------- */
+.card{background:var(--white);border:1px solid var(--line);border-radius:var(--r)}
+.card-h{padding:14px 18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px}
+.card-h h3{font-size:18px;font-weight:600}
+.card-b{padding:16px 18px}
+.rowi{display:grid;grid-template-columns:28px 1fr auto;gap:10px;padding:12px 18px;border-bottom:1px solid #eee;align-items:start}
+.rowi:last-child{border-bottom:none}
+.rowi .ic{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;margin-top:1px}
+.ic.ok{background:var(--green-lt);color:var(--green)} .ic.miss{background:var(--red-lt);color:var(--red)} .ic.eye{background:var(--gold-lt);color:var(--gold-dk)} .ic.wait{background:#eee;color:var(--text2)}
+.rowi .t{font-weight:600}
+.rowi .s{font-size:14px;color:var(--text2)}
+.rowi .src{font-size:13px;color:var(--text2)}
+.rowi.click{cursor:pointer}
+.rowi.click:hover{background:var(--bg)}
+.rowi.sel{background:var(--gold-lt)}
+h1.title{font-size:34px;font-weight:700;line-height:1.15}
+.eyebrow{font-size:13px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--text2)}
+.note{display:flex;gap:10px;align-items:flex-start;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 14px;font-size:14px;color:var(--text2)}
+
+/* ---------- Applicant ---------- */
+.app-grid{display:grid;grid-template-columns:390px 1fr;gap:32px;align-items:start}
+.phone{width:390px;height:780px;background:#111;border-radius:48px;padding:12px;box-shadow:0 20px 40px rgba(35,59,119,.18);position:relative}
+.screen{width:100%;height:100%;background:var(--bg);border-radius:38px;overflow:hidden;display:flex;flex-direction:column;position:relative}
+.sbar{display:flex;justify-content:space-between;padding:12px 28px 2px;font-size:13px;font-weight:600;background:var(--navy);color:#fff}
+.ahead{background:var(--navy);color:#fff;padding:8px 20px 14px;display:flex;justify-content:space-between;align-items:center}
+.ahead b{font-size:19px;font-weight:600}
+.ahead span{font-size:13px;color:var(--gold);font-weight:600}
+.abody{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px}
+.afoot{padding:12px 16px 20px;border-top:1px solid var(--line);background:var(--white);display:flex;flex-direction:column;gap:8px}
+.q{font-size:26px;font-weight:700;line-height:1.15}
+.sum{background:var(--white);border:1px solid var(--line);border-radius:10px;font-size:14px}
+.sum div{display:grid;grid-template-columns:88px 1fr;padding:7px 12px;border-bottom:1px solid #eee}
+.sum div:last-child{border-bottom:none}
+.sum b{font-weight:500;color:var(--text2)}
+.chk{display:grid;grid-template-columns:26px 1fr;gap:8px;padding:9px 12px;background:var(--white);border:1px solid var(--line);border-radius:10px;font-size:15px;opacity:0;transform:translateY(4px);transition:opacity .3s, transform .3s}
 .chk.show{opacity:1;transform:none}
-.chk .ic{font-weight:700;font-size:18px;line-height:1.1;text-align:center}
-.chk .t{font-weight:600;line-height:1.25}
-.chk .s{font-size:12.5px;color:var(--gray);line-height:1.3}
-.chk.fix{background:var(--orange-lt);padding:8px 8px;border:1.5px solid var(--orange);border-radius:6px}
-.result{font-family:var(--cond);font-weight:700;font-size:22px;text-transform:uppercase;padding:6px 0}
-.spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--rule);border-top-color:var(--orange);border-radius:50%;animation:spin .8s linear infinite;vertical-align:-2px}
+.chk .s{font-size:13px;color:var(--text2)}
+.chk.fix{border:2px solid var(--red);background:var(--red-lt)}
+.result{font-size:22px;font-weight:700}
+.ok{color:var(--green)} .miss{color:var(--red)}
+.spinner{display:inline-block;width:15px;height:15px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite}
+.btn:not(.primary):not(.gold) .spinner{border-color:var(--line);border-top-color:var(--navy)}
 @keyframes spin{to{transform:rotate(360deg)}}
-.toast{position:absolute;left:14px;right:14px;top:44px;background:rgba(19,35,58,.97);color:var(--cream);border-radius:14px;padding:10px 12px;font-size:13px;z-index:5;transform:translateY(calc(-100% - 70px));transition:transform .35s ease;box-shadow:0 8px 20px rgba(0,0,0,.25)}
+.toast{position:absolute;left:14px;right:14px;top:46px;background:rgba(26,44,90,.97);color:#fff;border-radius:14px;padding:10px 14px;font-size:14px;z-index:5;transform:translateY(calc(-100% - 70px));transition:transform .35s ease;box-shadow:0 8px 20px rgba(0,0,0,.25)}
 .toast.on{transform:none}
-.toast .from{font-family:var(--mono);font-size:11px;color:var(--yellow);margin-bottom:2px}
-
-/* ---------- Blueprint ---------- */
-.plan-wrap{background:var(--blue);display:flex;flex-direction:column}
-.plan-bar{display:flex;justify-content:space-between;align-items:center;background:var(--navy);color:var(--cream);padding:10px 16px}
-.plan-bar .cond{font-size:20px}
-.plan-bar .mono{font-size:12px;color:var(--yellow)}
-.plan-wrap svg{width:100%;height:auto;display:block}
-.pin{cursor:pointer}
-.pin circle{transition:r .15s}
-.pin:hover circle, .pin.sel circle{r:24}
-.pin.sel circle{stroke:var(--cream);stroke-width:4}
-.findings{display:flex;flex-direction:column;border-left:2px solid var(--navy)}
-.findings .notes{border-top:none;flex:1}
-.detail{border-top:2px solid var(--navy);padding:12px 14px;display:flex;flex-direction:column;gap:6px;min-height:150px;background:var(--white)}
-.detail .lbl{font-family:var(--mono);font-size:11px;color:var(--gray);text-transform:uppercase;letter-spacing:1px}
-.detail p{font-size:14px;line-height:1.35}
-.actions{display:flex;gap:10px;padding:12px 14px;border-top:2px solid var(--navy);background:var(--paper)}
-.actions .btn{flex:1}
-.status-line{font-family:var(--mono);font-size:12px;padding:8px 14px;border-top:1px solid var(--rule);color:var(--gray);min-height:34px}
-
-/* ---------- Queue ---------- */
-.queue{border:2px solid var(--navy);background:var(--paper)}
-.qhead,.qrow{display:grid;grid-template-columns:1.4fr 1.2fr 1fr 1fr 150px;align-items:center}
-.qhead{background:var(--navy);color:var(--cream);font-family:var(--mono);font-size:11px;letter-spacing:1px;text-transform:uppercase}
-.qhead div,.qrow div{padding:10px 14px}
-.qrow{border-bottom:1px solid var(--rule);font-size:14.5px;cursor:pointer}
-.qrow:hover{background:var(--cream)}
-.qrow.sel{background:var(--yellow-lt)}
-.qrow:last-child{border-bottom:none}
-.pill{font-family:var(--mono);font-size:11.5px;font-weight:500;padding:3px 8px;border:1.5px solid currentColor;display:inline-block;letter-spacing:.5px}
-.queue-grid{display:grid;grid-template-columns:1fr 440px;gap:24px;align-items:start}
-.gate{border:2px solid var(--navy);background:var(--white)}
-.gate-head{background:var(--navy);color:var(--cream);padding:10px 14px;display:flex;justify-content:space-between;align-items:center}
-.gate-head .cond{font-size:20px}
-.gate-head .mono{font-size:11px;color:var(--yellow)}
-.gate-body{padding:14px;display:flex;flex-direction:column;gap:10px}
-.confirm{display:grid;grid-template-columns:22px 1fr;gap:8px;font-size:14px;align-items:start;padding:8px 0;border-bottom:1px solid var(--rule);cursor:pointer}
-.confirm input{width:18px;height:18px;margin-top:1px;accent-color:var(--navy)}
-.human-only{display:flex;justify-content:space-between;align-items:center;font-family:var(--mono);font-size:12px;border-top:1px solid var(--navy);border-bottom:1px solid var(--navy);padding:8px 0}
-.agent-cant{font-size:13px;color:var(--gray);font-style:italic}
-.issued{border-top:2px solid var(--green);border-bottom:2px solid var(--green);padding:10px 0;display:none}
-.issued.on{display:block}
-.issued .cond{font-size:22px;color:var(--green)}
-
-/* ---------- Video ---------- */
-.video-grid{display:grid;grid-template-columns:400px 1fr;gap:32px;align-items:start}
-.cam{flex:1;background:#1B2430;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.toast small{display:block;color:var(--gold);font-weight:600;font-size:12px}
+.reqcard{background:var(--gold-lt);border:2px solid var(--gold);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.cam{flex:1;background:#1B2430;position:relative;overflow:hidden}
 .cam svg{width:100%;height:100%;display:block}
-.cam .rec{position:absolute;top:10px;left:12px;font-family:var(--mono);font-size:11px;color:#ff6b5b;display:flex;align-items:center;gap:6px}
+.cam .rec{position:absolute;top:10px;left:12px;font-size:12px;font-weight:600;color:#ff6b5b;display:flex;align-items:center;gap:6px}
 .cam .rec i{width:8px;height:8px;border-radius:50%;background:#ff6b5b;animation:blink 1.2s infinite}
 @keyframes blink{50%{opacity:.2}}
-.cam .shotlbl{position:absolute;top:10px;right:12px;font-family:var(--mono);font-size:11px;color:var(--cream)}
-.cam-msg{position:absolute;left:12px;right:12px;bottom:12px;padding:8px 10px;font-size:13.5px;font-weight:600;border-radius:8px;line-height:1.25}
-.cam-msg.warn{background:var(--orange-lt);color:var(--navy);border:2px solid var(--orange)}
-.cam-msg.ok{background:#E6F5EC;color:var(--navy);border:2px solid var(--green-lt)}
-.cam-msg.info{background:rgba(247,245,240,.94);color:var(--navy);border:2px solid var(--sky)}
+.cam .shotlbl{position:absolute;top:10px;right:12px;font-size:12px;font-weight:600;color:#fff}
+.cam-msg{position:absolute;left:12px;right:12px;bottom:12px;padding:9px 12px;font-size:15px;font-weight:600;border-radius:10px}
+.cam-msg.warn{background:var(--gold-lt);color:var(--ink);border:2px solid var(--gold)}
+.cam-msg.ok{background:var(--green-lt);color:var(--ink);border:2px solid var(--green)}
+.cam-msg.info{background:rgba(255,255,255,.95);color:var(--ink);border:2px solid var(--sky)}
 .progress{display:flex;gap:6px}
-.progress i{flex:1;height:8px;background:var(--rule)}
-.progress i.done{background:var(--green)}
-.progress i.cur{background:var(--orange)}
+.progress i{flex:1;height:6px;border-radius:3px;background:var(--line)}
+.progress i.done{background:var(--green)} .progress i.cur{background:var(--gold)}
 .bbox{animation:jitter 1.6s ease-in-out infinite}
 .bbox.b2{animation-duration:1.9s;animation-delay:-.4s}
-.bbox.b3{animation-duration:2.2s;animation-delay:-.9s}
 @keyframes jitter{0%,100%{transform:translate(0,0)}25%{transform:translate(1.5px,-1px)}50%{transform:translate(-1px,1.5px)}75%{transform:translate(1px,1px)}}
 .zoomable{transition:transform .9s cubic-bezier(.3,.7,.2,1)}
 .slots{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.slot{border:1.5px solid var(--navy);padding:8px;font-size:13px;text-align:left;border-radius:4px;background:var(--white)}
-.slot.sel{background:var(--navy);color:var(--cream)}
-.slot .mono{font-size:11px;display:block;opacity:.75}
+.slot{border:1.5px solid var(--line);padding:10px;font-size:15px;font-weight:600;text-align:left;border-radius:10px;background:var(--white)}
+.slot small{display:block;font-weight:400;font-size:12px;color:var(--text2)}
+.slot.sel{border-color:var(--navy);background:var(--sky)}
+.bigstate{text-align:center;padding:30px 10px;display:flex;flex-direction:column;gap:8px;align-items:center}
+.bigstate .ico{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:700}
 
-/* ---------- Messages ---------- */
-.msg-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start}
-.trig{display:grid;grid-template-columns:44px 1fr auto;border-bottom:1px solid var(--rule);align-items:stretch}
-.trig:last-child{border-bottom:none}
-.trig .num{font-family:var(--mono);font-size:13px;padding:10px 0 10px 12px;color:var(--orange-dk);font-weight:500}
-.trig .body{padding:9px 12px;border-left:1px solid var(--rule);display:flex;flex-direction:column;gap:3px}
-.trig .when{font-family:var(--mono);font-size:11.5px;color:var(--gray)}
-.trig .say{font-size:14.5px;line-height:1.3}
-.trig .ch{font-family:var(--mono);font-size:11px;color:var(--orange-dk)}
-.trig .fire{padding:9px 12px;border-left:1px solid var(--rule);display:flex;align-items:center}
-.trig.sent{background:var(--green-bg)}
-.log{border-top:2px solid var(--navy);border-bottom:2px solid var(--navy);background:var(--white);max-height:520px;overflow:auto}
-.logrow{display:grid;grid-template-columns:120px 130px 1fr;border-bottom:1px solid var(--rule);font-size:13.5px}
-.logrow div{padding:8px 10px}
-.logrow div + div{border-left:1px solid var(--rule)}
-.logrow .mono{font-size:11.5px;color:var(--gray)}
-.empty{padding:16px;color:var(--gray);font-size:14px;font-style:italic}
-.limits{display:grid;grid-template-columns:auto 1fr 1fr 1fr;border-top:2px solid var(--navy);border-bottom:2px solid var(--navy);margin-top:24px;background:var(--paper)}
-.limits > div{padding:12px 14px;display:flex;gap:10px;align-items:baseline}
-.limits > div + div{border-left:1px solid var(--navy)}
-.limits .mono{font-size:12px;font-weight:500;color:var(--orange-dk)}
-.limits b{font-weight:600;font-size:15px}
+/* vertical status steps */
+.vsteps{list-style:none;padding:8px 18px 14px}
+.vsteps li{display:grid;grid-template-columns:28px 1fr;gap:12px;position:relative;padding:8px 0}
+.vsteps li::before{content:"";position:absolute;left:13px;top:34px;bottom:-8px;width:2px;background:var(--line)}
+.vsteps li:last-child::before{display:none}
+.vsteps .b{width:28px;height:28px;border-radius:50%;border:2px solid var(--line);background:var(--white);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--text2);z-index:1}
+.vsteps li.done .b{background:var(--green);border-color:var(--green);color:#fff}
+.vsteps li.cur .b{border-color:var(--gold);background:var(--gold);color:var(--ink)}
+.vsteps .t{font-weight:600}
+.vsteps .s{font-size:14px;color:var(--text2)}
+.inbox .m{padding:12px 18px;border-bottom:1px solid #eee}
+.inbox .m:last-child{border-bottom:none}
+.inbox .meta{font-size:13px;color:var(--text2);display:flex;gap:8px;align-items:center}
+.empty{padding:16px 18px;color:var(--text2);font-size:15px}
 
-footer.foot{max-width:1440px;margin:0 auto;padding:0 24px 28px;display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;font-family:var(--mono);font-size:12px;color:var(--gray)}
+/* ---------- Staff shell (city + inspector), adapted from the Figma Make "Permit Intake" layout ---------- */
+.shell{display:grid;grid-template-columns:250px 1fr;min-height:720px;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--white)}
+.side{background:var(--navy-dk);color:#fff;display:flex;flex-direction:column;padding:20px 14px;gap:6px}
+.side .logo{display:flex;align-items:center;gap:10px;padding:0 6px 18px}
+.side .logo b{display:block;font-size:17px;letter-spacing:2px;line-height:1.1}
+.side .logo span{display:block;font-size:11px;letter-spacing:1.5px;color:#b9c6e4;text-transform:uppercase}
+.side .sec{font-size:12px;letter-spacing:1.2px;text-transform:uppercase;color:#9fb0d6;padding:14px 8px 6px}
+.side .nav{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;border-radius:8px;font-size:15px;color:#e6ecf8;text-align:left;width:100%}
+.side .nav:hover{background:rgba(255,255,255,.07)}
+.side .nav[aria-current="true"]{background:rgba(255,255,255,.12);box-shadow:inset 3px 0 0 var(--gold);color:#fff;font-weight:600}
+.side .cnt{font-size:12px;background:rgba(255,255,255,.15);border-radius:6px;padding:0 7px}
+.side .alerts{margin-top:auto;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:12px;font-size:13px;color:#d5def0;display:flex;flex-direction:column;gap:8px}
+.side .alerts b{color:var(--gold);font-size:12px;letter-spacing:1px;text-transform:uppercase}
+.side .user{display:flex;gap:10px;align-items:center;padding:12px 6px 0;font-size:14px}
+.side .av{width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600}
+.content{padding:20px 28px 28px;display:flex;flex-direction:column;gap:18px;min-width:0}
+.crumbs{font-size:14px;color:var(--text2)}
+.crumbs button{color:var(--link);text-decoration:underline}
+.stepper{display:grid;grid-template-columns:repeat(5,1fr);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.stepper div{padding:10px 14px;border-right:1px solid var(--line);font-size:15px;font-weight:600;color:var(--text2)}
+.stepper div:last-child{border-right:none}
+.stepper div small{display:block;font-family:var(--mono);font-size:12px;font-weight:400}
+.stepper .done{color:var(--green)}
+.stepper .cur{background:var(--navy);color:#fff}
+.rec{display:flex;gap:14px;background:var(--gold-lt);border:1px solid #f3dca0;border-left:4px solid var(--gold);border-radius:10px;padding:14px 18px}
+.rec.good{background:var(--green-lt);border-color:#bfe0cb;border-left-color:var(--green)}
+.rec .lbl{font-size:12px;letter-spacing:1.2px;text-transform:uppercase;font-weight:600;color:var(--gold-dk)}
+.rec.good .lbl{color:var(--green)}
+.rec h3{font-size:20px;font-weight:600}
+.rec p{font-size:15px;color:var(--text2)}
+.cols{display:grid;grid-template-columns:1fr 340px;gap:18px;align-items:start}
+.stack{display:flex;flex-direction:column;gap:18px}
+table.q{width:100%;border-collapse:collapse;font-size:15px}
+table.q th{text-align:left;font-size:13px;font-weight:600;color:var(--text2);padding:10px 16px;border-bottom:1px solid var(--line);background:var(--bg)}
+table.q td{padding:12px 16px;border-bottom:1px solid #eee}
+table.q tr.click{cursor:pointer}
+table.q tr.click:hover td{background:var(--sky)}
+table.q tr.dim td{color:#999}
+.plan svg{width:100%;height:auto;display:block;border-radius:0 0 var(--r) var(--r)}
+.pin{cursor:pointer}
+.pin circle{transition:r .15s}
+.pin:hover circle,.pin.sel circle{r:24}
+.pin.sel circle{stroke:#fff;stroke-width:4}
+.detail{padding:14px 18px;border-top:1px solid var(--line);font-size:15px;display:flex;flex-direction:column;gap:4px;background:var(--bg)}
+.doc{display:grid;grid-template-columns:30px 1fr auto;gap:10px;align-items:center;padding:10px 18px;border-bottom:1px solid #eee;font-size:15px}
+.doc:last-child{border-bottom:none}
+.doc .f{width:26px;height:32px;border:1.5px solid var(--line);border-radius:3px;font-size:9px;display:flex;align-items:flex-end;justify-content:center;color:var(--text2);padding-bottom:2px}
+.confirm{display:grid;grid-template-columns:22px 1fr;gap:10px;font-size:15px;align-items:start;padding:8px 0;cursor:pointer}
+.confirm input{width:18px;height:18px;margin-top:3px;accent-color:var(--navy)}
+.humanonly{font-size:13px;color:var(--text2);display:flex;align-items:center;gap:6px}
+.shots{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.shot{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--white)}
+.shot svg{width:100%;aspect-ratio:356/300;display:block;background:#1B2430}
+.shot div{padding:8px 10px;font-size:14px}
+
+footer.foot{max-width:1360px;margin:0 auto;padding:0 24px 28px;font-size:13px;color:var(--text2)}
 
 @media (max-width:1100px){
-  .grid2,.video-grid,.queue-grid,.msg-grid{grid-template-columns:1fr}
-  .grid-plan{grid-template-columns:1fr}
-  .findings{border-left:none;border-top:2px solid var(--navy)}
+  .app-grid{grid-template-columns:1fr}
   .phone{margin:0 auto}
-  header.tb{grid-template-columns:1fr}
-  .tb-cell{border-right:none;border-bottom:1px solid var(--navy)}
-  .limits{grid-template-columns:1fr}
-  .limits > div + div{border-left:none;border-top:1px solid var(--navy)}
+  .cols{grid-template-columns:1fr}
+  .shots{grid-template-columns:repeat(2,1fr)}
 }
-@media (max-width:520px){
+@media (max-width:820px){
+  .shell{grid-template-columns:1fr}
+  .side{display:none}
+  .content{padding:16px}
+  .stepper{grid-template-columns:repeat(5,minmax(0,1fr))}
+  .stepper div{padding:8px;font-size:13px}
+  .stepper div small{display:none}
+  .roles{margin-left:0;width:100%}
+  .roles button{flex:1;justify-content:center;padding:8px 6px;font-size:14px}
+}
+@media (max-width:480px){
   main{padding:16px}
-  .phone{width:100%;max-width:380px}
-  .qhead,.qrow{grid-template-columns:1.2fr 1fr 120px}
-  .qhead div:nth-child(3),.qhead div:nth-child(4),.qrow div:nth-child(3),.qrow div:nth-child(4){display:none}
-  h1.sheet-title{font-size:34px}
+  .top-in,.guide-in{padding-left:16px;padding-right:16px}
+  .phone{width:100%;max-width:390px;height:720px;padding:8px;border-radius:40px}
+  .screen{border-radius:32px}
+  h1.title{font-size:26px}
+  table.q th:nth-child(3),table.q td:nth-child(3){display:none}
 }
 </style>
 </head>
 <body>
 
-<header class="tb">
-  <div class="tb-cell">
-    <span class="tb-label">Project · City of Pittsburgh Permits, Licenses, and Inspections</span>
-    <span class="tb-title">Ready-Check agent</span>
-    <span class="tb-sim">PROTOTYPE · SIMULATED DATA · NOT A CITY SYSTEM</span>
-  </div>
-  <nav class="sheets" id="nav" aria-label="Prototype screens"></nav>
-  <div class="tb-cell tb-actions">
-    <button class="btn small" id="resetBtn" title="Start the story over">Reset demo</button>
+<header class="top">
+  <div class="top-in">
+    <div class="brand">
+      <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><rect x="2" y="16" width="5" height="16" fill="#f8bd32"/><rect x="9" y="8" width="5" height="24" fill="#f8bd32"/><rect x="16" y="2" width="5" height="30" fill="#233b77"/><rect x="23" y="12" width="5" height="20" fill="#f8bd32"/><rect x="0" y="31" width="34" height="3" fill="#233b77"/></svg>
+      <div><b>PITTSBURGH</b><span>Permit Ready-Check · prototype</span></div>
+    </div>
+    <nav class="roles" role="tablist" aria-label="Who is using it">
+      <button role="tab" data-view="app">Applicant <span class="dotn" id="nApp" hidden></span></button>
+      <button role="tab" data-view="city">City dashboard <span class="dotn" id="nCity" hidden></span></button>
+      <button role="tab" data-view="insp">Inspector <span class="dotn" id="nInsp" hidden></span></button>
+    </nav>
+    <div class="top-right">
+      <span class="simtag">Simulated data</span>
+      <button class="btn sm" id="resetBtn">Reset</button>
+    </div>
   </div>
 </header>
 
+<div class="guide" aria-live="polite">
+  <div class="guide-in">
+    <span class="step" id="gStep">Step 1 of 6</span>
+    <span class="txt" id="gTxt"></span>
+    <button class="btn sm primary" id="gGo" hidden></button>
+  </div>
+</div>
+
 <main>
 
-<!-- ============ RC-1 PRE-CHECK ============ -->
-<section class="sheet" id="s-precheck">
-  <div class="sheet-head">
-    <div>
-      <div class="kicker">Checkpoint 1 · before she applies</div>
-      <h1 class="sheet-title">Is my application ready?</h1>
-      <p class="lede">Laurel is replacing 4 windows. The agent checks her file before she submits.</p>
-    </div>
-    <div class="legend">
-      <span><i style="background:var(--green-lt)"></i>ok</span>
-      <span><i style="background:var(--orange)"></i>fix before submit</span>
-      <span><i style="background:var(--yellow)"></i>info</span>
-    </div>
-  </div>
-
-  <div class="grid2">
+<!-- ================= APPLICANT ================= -->
+<section class="view" id="v-app">
+  <div class="app-grid">
     <div class="phone">
       <div class="screen">
-        <div class="toast" id="toast1"><div class="from">READY-CHECK AGENT</div><div class="tx"></div></div>
-        <div class="statusbar"><span>9:41</span><span>LTE ▮▮▮</span></div>
-        <div class="apphead"><span class="cond">Ready-Check</span><span class="mono" id="pcStep">STEP 1 OF 2</span></div>
-        <div class="appbody" id="pcBody">
-          <div class="q">Is my application ready?</div>
-          <div class="summary">
-            <div><b>Applicant</b><span>Laurel <span class="ph" title="Placeholder name">[Lastname]</span></span></div>
-            <div><b>Address</b><span><span class="ph" title="Placeholder address">[1234 Example St]</span>, Pittsburgh</span></div>
-            <div><b>Work</b><span>Replace 4 windows. Enlarge bedroom window W-3.</span></div>
-            <div><b>Contractor</b><span class="ph" title="Placeholder company">[Three Rivers Window Co.]</span></div>
-            <div><b>Uploads</b><span>Application form · Drawings A-1, A-2 · Insurance certificate</span></div>
+        <div class="toast" id="toast"><small>READY-CHECK</small><span class="tx"></span></div>
+        <div class="sbar"><span id="clock">9:41</span><span>●●● LTE</span></div>
+        <div class="ahead"><b>Ready-Check</b><span id="aStage">Step 1 of 2</span></div>
+        <div id="phoneBody" style="flex:1;display:flex;flex-direction:column;min-height:0"></div>
+      </div>
+    </div>
+
+    <div class="stack">
+      <div>
+        <div class="eyebrow">Applicant · Laurel <span class="ph" title="Placeholder name">[Lastname]</span></div>
+        <h1 class="title">Replacing 4 windows</h1>
+        <p class="muted">One window (W-3) gets bigger, so it needs a standard permit with drawings.</p>
+      </div>
+      <div class="card">
+        <div class="card-h"><h3>My permit</h3><span class="pill p-info" id="aPill">Not submitted</span></div>
+        <ol class="vsteps" id="aSteps"></ol>
+      </div>
+      <div class="card">
+        <div class="card-h"><h3>Messages</h3><span class="muted small">app · text · email</span></div>
+        <div class="inbox" id="aInbox"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= CITY DASHBOARD ================= -->
+<section class="view" id="v-city">
+  <div class="shell">
+    <aside class="side">
+      <div class="logo">
+        <svg width="30" height="30" viewBox="0 0 34 34" aria-hidden="true"><rect x="2" y="16" width="5" height="16" fill="#f8bd32"/><rect x="9" y="8" width="5" height="24" fill="#f8bd32"/><rect x="16" y="2" width="5" height="30" fill="#f8bd32"/><rect x="23" y="12" width="5" height="20" fill="#f8bd32"/></svg>
+        <div><b>PITTSBURGH</b><span>Permit intake</span></div>
+      </div>
+      <div class="sec">PLI workspace</div>
+      <button class="nav" data-cpage="queue"><span>Application queue</span><span class="cnt" id="qCount">3</span></button>
+      <button class="nav" data-cpage="file" id="navFile" hidden><span>1234 Example St</span><span class="cnt">open</span></button>
+      <div class="alerts" id="cityAlerts"><b>Agent alerts</b><span>No alerts yet.</span></div>
+      <div class="user"><span class="av">JT</span><div>Application technician<br><span style="font-size:12px;color:#9fb0d6"><span class="ph" style="border-color:#9fb0d6">[J. Technician]</span></span></div></div>
+    </aside>
+
+    <div class="content" id="cityContent">
+      <!-- queue page -->
+      <div id="cQueue" class="stack">
+        <div>
+          <div class="eyebrow">Residential permits</div>
+          <h1 class="title">Application queue</h1>
+          <p class="muted">The agent sorts each file. People decide.</p>
+        </div>
+        <div class="card" style="overflow-x:auto">
+          <table class="q"><thead><tr><th>Address</th><th>Work</th><th>Days waiting</th><th>Agent sort</th></tr></thead><tbody id="qBody"></tbody></table>
+        </div>
+        <div class="note">ⓘ Sorting only changes the order. The agent can't approve, reject or issue.</div>
+      </div>
+
+      <!-- file page -->
+      <div id="cFile" class="stack" hidden>
+        <div class="crumbs"><button data-cpage="queue">Application queue</button> › <span class="ph">[APP-2026-XXXX]</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap">
+          <div>
+            <div class="eyebrow">Window alteration · standard permit</div>
+            <h1 class="title"><span class="ph" title="Placeholder address">[1234 Example St]</span></h1>
+            <div class="muted small">Laurel <span class="ph">[Lastname]</span> · contractor <span class="ph">[Three Rivers Window Co.]</span></div>
           </div>
-          <div id="pcChecks"></div>
-          <div id="pcResult"></div>
         </div>
-        <div class="appfoot"><button class="btn orange" id="pcBtn">Check my application</button></div>
-      </div>
-    </div>
-
-    <div class="stack">
-      <div class="notes">
-        <div class="notes-head"><span class="cond">What the agent checks</span><span class="mono">6 checks · rules + document AI</span></div>
-        <div id="pcNotes"></div>
-      </div>
-      <div class="notes">
-        <div class="notes-head"><span class="cond">Guardrails</span><span class="mono"></span></div>
-        <div class="nrow"><div class="num">01</div><div class="body"><span class="t">Never submits or approves</span></div><div class="tag"></div></div>
-        <div class="nrow"><div class="num">02</div><div class="body"><span class="t">Unsure? Hands it to a person</span></div><div class="tag"></div></div>
-      </div>
-    </div>
-  </div>
-
-  <div class="storyline"><span class="lbl">STORY</span><span class="txt" id="pcStory">Press <b>Check my application</b>.</span><span class="go"><button class="btn small" data-goto="plan">Next: plan read →</button></span></div>
-</section>
-
-<!-- ============ RC-2 PLAN READ ============ -->
-<section class="sheet" id="s-plan">
-  <div class="sheet-head">
-    <div>
-      <div class="kicker">After submit · application technician view</div>
-      <h1 class="sheet-title">The agent reads the drawings first</h1>
-      <p class="lede">Agent pins findings on sheet A-1. Missing items go to the technician, code questions to the reviewer.</p>
-    </div>
-    <div class="legend">
-      <span><i style="background:var(--green-lt)"></i>ok</span>
-      <span><i style="background:var(--orange)"></i>missing</span>
-      <span><i style="background:var(--yellow)"></i>human eyes</span>
-    </div>
-  </div>
-
-  <div class="grid-plan">
-    <div class="plan-wrap">
-      <div class="plan-bar"><span class="cond">Plan intake · window alteration</span><span class="mono">Sheet A-1 · tap a pin</span></div>
-      <svg id="planSvg" viewBox="0 0 1040 620" role="img" aria-label="Floor plan sheet A-1 with five numbered agent pins">
-        <defs><pattern id="bp" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M20 0 H0 V20" fill="none" stroke="#2A5C9A" stroke-width="1"/></pattern></defs>
-        <rect width="1040" height="620" fill="#1E4C86"/><rect width="1040" height="620" fill="url(#bp)"/>
-        <!-- walls -->
-        <rect x="60" y="60" width="600" height="420" fill="none" stroke="#EAF1FB" stroke-width="8"/>
-        <line x1="340" y1="60" x2="340" y2="300" stroke="#EAF1FB" stroke-width="6"/>
-        <line x1="60" y1="300" x2="660" y2="300" stroke="#EAF1FB" stroke-width="6"/>
-        <line x1="500" y1="300" x2="500" y2="480" stroke="#EAF1FB" stroke-width="6"/>
-        <line x1="200" y1="300" x2="200" y2="480" stroke="#EAF1FB" stroke-width="6"/>
-        <!-- door swing -->
-        <path d="M340 150 A50 50 0 0 1 390 200" fill="none" stroke="#EAF1FB" stroke-width="2"/><line x1="340" y1="200" x2="390" y2="200" stroke="#EAF1FB" stroke-width="2"/>
-        <!-- windows W-1, W-2 (top), W-3 (right, enlarged), W-4 (bottom) -->
-        <g stroke="#EAF1FB"><rect x="140" y="52" width="110" height="16" fill="#1E4C86" stroke-width="3"/><line x1="140" y1="60" x2="250" y2="60" stroke-width="2"/></g>
-        <g stroke="#EAF1FB"><rect x="420" y="52" width="110" height="16" fill="#1E4C86" stroke-width="3"/><line x1="420" y1="60" x2="530" y2="60" stroke-width="2"/></g>
-        <g stroke="#F2B705"><rect x="652" y="120" width="16" height="150" fill="#1E4C86" stroke-width="3" stroke-dasharray="10 6"/><line x1="660" y1="120" x2="660" y2="270" stroke-width="2"/></g>
-        <g stroke="#EAF1FB"><rect x="300" y="472" width="110" height="16" fill="#1E4C86" stroke-width="3"/><line x1="300" y1="480" x2="410" y2="480" stroke-width="2"/></g>
-        <!-- header line over W-3 -->
-        <line x1="676" y1="110" x2="676" y2="280" stroke="#F2B705" stroke-width="3"/>
-        <text x="690" y="200" font-family="IBM Plex Mono, monospace" font-size="13" fill="#F2B705" transform="rotate(90 690 200)" text-anchor="middle">NEW HEADER</text>
-        <!-- stair -->
-        <g stroke="#EAF1FB" stroke-width="2"><line x1="520" y1="320" x2="640" y2="320"/><line x1="520" y1="345" x2="640" y2="345"/><line x1="520" y1="370" x2="640" y2="370"/><line x1="520" y1="395" x2="640" y2="395"/><line x1="520" y1="420" x2="640" y2="420"/><line x1="520" y1="445" x2="640" y2="445"/></g>
-        <!-- room labels -->
-        <g font-family="IBM Plex Mono, monospace" font-weight="500" fill="#EAF1FB" text-anchor="middle" font-size="20">
-          <text x="200" y="190">KITCHEN</text><text x="500" y="200">BEDROOM 2</text><text x="130" y="400">BATH</text><text x="350" y="400">LIVING</text>
-        </g>
-        <text x="580" y="470" font-family="IBM Plex Mono, monospace" font-size="16" fill="#EAF1FB" text-anchor="middle">STAIR</text>
-        <g font-family="IBM Plex Mono, monospace" font-size="15" fill="#EAF1FB" text-anchor="middle">
-          <text x="195" y="45">W-1  30x48</text><text x="475" y="45">W-2  30x48</text><text x="355" y="510">W-4  30x48</text>
-        </g>
-        <text x="640" y="105" font-family="IBM Plex Mono, monospace" font-size="15" fill="#F2B705" text-anchor="end">W-3  ? x ?</text>
-        <!-- dimension -->
-        <line x1="60" y1="550" x2="660" y2="550" stroke="#EAF1FB" stroke-width="2"/><line x1="60" y1="540" x2="60" y2="560" stroke="#EAF1FB" stroke-width="2"/><line x1="660" y1="540" x2="660" y2="560" stroke="#EAF1FB" stroke-width="2"/>
-        <text x="360" y="578" font-family="IBM Plex Mono, monospace" font-size="16" fill="#EAF1FB" text-anchor="middle">24'-0"</text>
-        <!-- title block -->
-        <rect x="760" y="400" width="250" height="180" fill="none" stroke="#EAF1FB" stroke-width="3"/>
-        <line x1="760" y1="450" x2="1010" y2="450" stroke="#EAF1FB" stroke-width="2"/><line x1="760" y1="500" x2="1010" y2="500" stroke="#EAF1FB" stroke-width="2"/><line x1="885" y1="500" x2="885" y2="580" stroke="#EAF1FB" stroke-width="2"/>
-        <g font-family="IBM Plex Mono, monospace" fill="#EAF1FB">
-          <text x="772" y="432" font-size="15">OWNER: LAUREL [—]</text>
-          <text x="772" y="482" font-size="14">[1234 EXAMPLE ST] PGH</text>
-          <text x="772" y="525" font-size="12">SHEET</text><text x="772" y="555" font-size="18" font-weight="500">A-1 of 3</text>
-          <text x="897" y="525" font-size="12">SCALE</text><text x="897" y="555" font-size="15">1/4in=1ft</text>
-        </g>
-        <!-- sheet index -->
-        <rect x="760" y="60" width="250" height="140" fill="none" stroke="#EAF1FB" stroke-width="2" stroke-dasharray="8 6"/>
-        <g font-family="IBM Plex Mono, monospace" font-size="14" fill="#EAF1FB">
-          <text x="775" y="92" font-weight="500">SHEET INDEX</text>
-          <text x="775" y="122">A-1  FLOOR PLAN</text><text x="775" y="148">A-2  ELEVATIONS</text><text x="775" y="174">S-1  SITE PLAN</text>
-        </g>
-        <!-- pins -->
-        <g id="pins"></g>
-      </svg>
-    </div>
-    <div class="findings">
-      <div class="notes">
-        <div class="notes-head"><span class="cond">Agent findings · 5</span><span class="mono">sheet A-1</span></div>
-        <div id="planNotes"></div>
-      </div>
-      <div class="detail" id="planDetail">
-        <span class="lbl">Finding detail</span>
-        <p>Tap a pin or a row to see why the agent flagged it and who it goes to.</p>
-      </div>
-      <div class="actions">
-        <button class="btn primary" id="reqS1">Request S-1</button>
-        <button class="btn" id="acceptPlan">Accept</button>
-      </div>
-      <div class="status-line mono" id="planStatus">Waiting on the technician.</div>
-    </div>
-  </div>
-
-  <div class="storyline"><span class="lbl">STORY</span><span class="txt" id="planStory">Tap pin 4, then <b>Request S-1</b>.</span><span class="go"><button class="btn small" data-goto="queue">Next: staff queue →</button></span></div>
-</section>
-
-<!-- ============ RC-3 STAFF QUEUE ============ -->
-<section class="sheet" id="s-queue">
-  <div class="sheet-head">
-    <div>
-      <div class="kicker">City staff · issue stage</div>
-      <h1 class="sheet-title">Only a person can issue the permit</h1>
-      <p class="lede">The agent sorts and reports. It has no issue button.</p>
-    </div>
-  </div>
-
-  <div class="queue-grid">
-    <div class="stack">
-      <div class="queue" id="queue">
-        <div class="qhead"><div>Address</div><div>Work</div><div>Submitted</div><div>Days in queue</div><div>Agent sort</div></div>
-      </div>
-      <div class="notes">
-        <div class="notes-head"><span class="cond">Agent report · <span id="qrTitle">Laurel's file</span></span><span class="mono" id="qrSub">every check links to its rule</span></div>
-        <div id="qReport"></div>
-      </div>
-    </div>
-
-    <div class="gate">
-      <div class="gate-head"><span class="cond">Issue decision</span><span class="mono">HUMAN ONLY</span></div>
-      <div class="gate-body" id="gateBody">
-        <div class="human-only"><span>Signed in: <span class="ph" title="Placeholder staff name">[J. Technician]</span></span><span>Application Technician</span></div>
-        <label class="confirm"><input type="checkbox" id="c1"><span>I read the agent report and the sources it cites.</span></label>
-        <label class="confirm"><input type="checkbox" id="c2"><span>Plan reviewer notes 3 and 5 are signed off. <span class="mono" style="font-size:11px;color:var(--gray)">(simulated sign-off)</span></span></label>
-        <label class="confirm"><input type="checkbox" id="c3"><span>Site plan S-1 is on file.</span></label>
-        <p class="agent-cant" id="gateHint">The agent can't press this button.</p>
-        <button class="btn primary" id="issueBtn" disabled>Issue permit</button>
-        <button class="btn" id="sendBackBtn">Send back to applicant</button>
-        <div class="issued" id="issuedBox">
-          <div class="cond">Permit issued</div>
-          <div class="mono" style="font-size:12px">Permit no. <span class="ph" title="Placeholder permit number">[BP-2026-XXXXX]</span> · issued by <span class="ph">[J. Technician]</span> (human)</div>
-          <div style="font-size:13.5px;margin-top:6px">Agent notifies Laurel and her contractor.</div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="storyline"><span class="lbl">STORY</span><span class="txt" id="queueStory">Tick all three, then <b>Issue permit</b>.</span><span class="go"><button class="btn small" data-goto="video">Next: video check →</button></span></div>
-</section>
-
-<!-- ============ RC-4 VIDEO CHECK ============ -->
-<section class="sheet" id="s-video">
-  <div class="sheet-head">
-    <div>
-      <div class="kicker">Checkpoint 2 · before the inspector calls</div>
-      <h1 class="sheet-title">Is my site ready?</h1>
-      <p class="lede">Computer vision checks each shot before the inspector joins.</p>
-    </div>
-    <div class="legend">
-      <span><i style="background:var(--green-lt)"></i>detected</span>
-      <span><i style="background:var(--yellow)"></i>needs a better shot</span>
-    </div>
-  </div>
-
-  <div class="video-grid">
-    <div class="phone">
-      <div class="screen">
-        <div class="toast" id="toast4"><div class="from">READY-CHECK AGENT</div><div class="tx"></div></div>
-        <div class="statusbar"><span>7:12 PM</span><span>LTE ▮▮▮</span></div>
-        <div class="apphead"><span class="cond">Ready-Check</span><span class="mono" id="vStep">STEP 2 OF 2</span></div>
-        <div class="cam" id="cam">
-          <div class="rec"><i></i>LIVE</div>
-          <div class="shotlbl" id="shotLbl">SHOT 1 OF 4</div>
-          <svg id="camSvg" viewBox="0 0 356 440" preserveAspectRatio="xMidYMid slice"></svg>
-          <div class="cam-msg info" id="camMsg">Point at the outside of window W-3.</div>
-        </div>
-        <div class="appfoot" style="display:flex;flex-direction:column;gap:10px">
-          <div class="row" style="justify-content:space-between"><span class="mono" style="font-size:11px;color:var(--gray)">AI VISION · <span id="vCount">shot 1 of 4</span></span></div>
-          <div class="progress" id="vProg"><i></i><i></i><i></i><i></i></div>
-          <div class="row" style="flex-wrap:nowrap"><button class="btn" id="closerBtn" style="flex:1;display:none">Move closer</button><button class="btn orange" id="captureBtn" style="flex:1">Capture shot</button></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="stack">
-      <div class="notes">
-        <div class="notes-head"><span class="cond">Shot list · window W-3</span><span class="mono"><span class="ph" title="Confirm the real checklist with the city">[placeholder list]</span></span></div>
-        <div id="shotNotes"></div>
-      </div>
-
-      <div class="notes" id="bookPanel" style="display:none">
-        <div class="notes-head"><span class="cond">Book the video inspection</span><span class="mono">virtual slots · simulated</span></div>
-        <div style="padding:12px" class="stack">
-          <div class="slots" id="slots"></div>
-          <button class="btn primary" id="bookBtn" disabled>Book this slot</button>
-        </div>
-      </div>
-
-      <div class="gate" id="inspPanel" style="display:none">
-        <div class="gate-head"><span class="cond">Inspector · video call</span><span class="mono">HUMAN ONLY</span></div>
-        <div class="gate-body">
-          <div class="human-only"><span>Inspector: <span class="ph">[R. Inspector]</span></span><span id="inspSlot"></span></div>
-          <div class="notes" style="border-top:1px solid var(--navy);border-bottom:1px solid var(--navy)">
-            <div class="nrow"><div class="num">01</div><div class="body"><span class="t">All 4 shots on file before the call</span><span class="src">Agent · computer vision</span></div><div class="tag st-ok">READY</div></div>
-            <div class="nrow"><div class="num">02</div><div class="body"><span class="t">Draft notes from the call</span><span class="s">"New unit installed in enlarged opening W-3, sealant continuous, label readable." <span class="ph">[simulated speech-to-text]</span></span></div><div class="tag st-eye">DRAFT</div></div>
+        <div class="stepper" id="cStepper"></div>
+        <div class="rec" id="cRec"></div>
+        <div class="cols">
+          <div class="stack">
+            <div class="card plan">
+              <div class="card-h"><h3>Drawing check · sheet A-1</h3><span class="muted small">tap a numbered pin</span></div>
+              <svg id="planSvg" viewBox="0 0 1040 620" role="img" aria-label="Floor plan A-1 with five agent findings">
+                <defs><pattern id="bp" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M20 0 H0 V20" fill="none" stroke="#345d96" stroke-width="1"/></pattern></defs>
+                <rect width="1040" height="620" fill="#233b77"/><rect width="1040" height="620" fill="url(#bp)"/>
+                <g stroke="#eaf1fc" fill="none">
+                  <rect x="60" y="60" width="600" height="420" stroke-width="8"/>
+                  <line x1="340" y1="60" x2="340" y2="300" stroke-width="6"/><line x1="60" y1="300" x2="660" y2="300" stroke-width="6"/>
+                  <line x1="500" y1="300" x2="500" y2="480" stroke-width="6"/><line x1="200" y1="300" x2="200" y2="480" stroke-width="6"/>
+                  <path d="M340 150 A50 50 0 0 1 390 200" stroke-width="2"/><line x1="340" y1="200" x2="390" y2="200" stroke-width="2"/>
+                  <rect x="140" y="52" width="110" height="16" fill="#233b77" stroke-width="3"/><rect x="420" y="52" width="110" height="16" fill="#233b77" stroke-width="3"/><rect x="300" y="472" width="110" height="16" fill="#233b77" stroke-width="3"/>
+                  <g stroke-width="2"><line x1="520" y1="320" x2="640" y2="320"/><line x1="520" y1="345" x2="640" y2="345"/><line x1="520" y1="370" x2="640" y2="370"/><line x1="520" y1="395" x2="640" y2="395"/><line x1="520" y1="420" x2="640" y2="420"/><line x1="520" y1="445" x2="640" y2="445"/></g>
+                  <line x1="60" y1="550" x2="660" y2="550" stroke-width="2"/>
+                  <rect x="760" y="400" width="250" height="180" stroke-width="3"/><line x1="760" y1="450" x2="1010" y2="450" stroke-width="2"/><line x1="760" y1="500" x2="1010" y2="500" stroke-width="2"/>
+                  <rect x="760" y="60" width="250" height="140" stroke-width="2" stroke-dasharray="8 6"/>
+                </g>
+                <g stroke="#f8bd32" fill="#233b77"><rect x="652" y="120" width="16" height="150" stroke-width="3" stroke-dasharray="10 6"/><line x1="676" y1="110" x2="676" y2="280" stroke-width="3"/></g>
+                <g font-family="Outfit, sans-serif" fill="#eaf1fc" text-anchor="middle">
+                  <g font-size="20" font-weight="600"><text x="200" y="190">KITCHEN</text><text x="500" y="200">BEDROOM 2</text><text x="130" y="400">BATH</text><text x="350" y="400">LIVING</text></g>
+                  <text x="580" y="470" font-size="16">STAIR</text>
+                  <g font-size="15"><text x="195" y="45">W-1  30x48</text><text x="475" y="45">W-2  30x48</text><text x="355" y="510">W-4  30x48</text></g>
+                  <text x="360" y="578" font-size="16">24'-0"</text>
+                </g>
+                <text x="640" y="105" font-family="Outfit, sans-serif" font-size="15" fill="#f8bd32" text-anchor="end">W-3  ? x ?</text>
+                <g font-family="Outfit, sans-serif" fill="#eaf1fc" font-size="15">
+                  <text x="775" y="92" font-weight="600">SHEET INDEX</text><text x="775" y="122">A-1  FLOOR PLAN</text><text x="775" y="148">A-2  ELEVATIONS</text><text x="775" y="174">S-1  SITE PLAN</text>
+                  <text x="772" y="432">OWNER: LAUREL [—]</text><text x="772" y="482">[1234 EXAMPLE ST] PGH</text><text x="772" y="545" font-size="18" font-weight="600">A-1 of 3 · 1/4in=1ft</text>
+                </g>
+                <g id="pins"></g>
+              </svg>
+              <div id="planList"></div>
+              <div class="detail" id="planDetail"><span class="muted">Pick a finding to see why the agent flagged it and who it goes to.</span></div>
+            </div>
           </div>
-          <p class="agent-cant">Agent drafts notes. Inspector decides.</p>
-          <div class="row"><button class="btn primary" id="passBtn" style="flex:1">Pass</button><button class="btn" id="failBtn" style="flex:1">Fail</button></div>
-          <div class="mono" style="font-size:12px" id="inspResult"></div>
+
+          <div class="stack">
+            <div class="card">
+              <div class="card-h"><h3>Submission packet</h3><span class="muted small" id="pkCount"></span></div>
+              <div id="packet"></div>
+            </div>
+            <div class="card">
+              <div class="card-h"><h3>Issue decision</h3><span class="pill p-info">Person only</span></div>
+              <div class="card-b" id="gate">
+                <label class="confirm"><input type="checkbox" id="c1"><span>I read the agent report and its sources.</span></label>
+                <label class="confirm"><input type="checkbox" id="c2"><span>Plan reviewer signed off notes 3 and 5. <span class="muted small">(simulated)</span></span></label>
+                <label class="confirm"><input type="checkbox" id="c3"><span>Site plan S-1 is on file.</span></label>
+                <p class="humanonly" id="gateHint" style="margin:8px 0 12px">🔒 The agent can't press these buttons.</p>
+                <div style="display:flex;flex-direction:column;gap:8px">
+                  <button class="btn primary block" id="issueBtn" disabled>Issue permit</button>
+                  <button class="btn block" id="sendBackBtn">Send back to applicant</button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   </div>
-
-  <div class="storyline"><span class="lbl">STORY</span><span class="txt" id="videoStory">Capture each shot. Shot 3 is blurry: <b>Move closer</b>.</span><span class="go"><button class="btn small" data-goto="msgs">Next: agent messages →</button></span></div>
 </section>
 
-<!-- ============ RC-5 MESSAGES ============ -->
-<section class="sheet" id="s-msgs">
-  <div class="sheet-head">
-    <div>
-      <div class="kicker">Proactive · the agent reaches out first</div>
-      <h1 class="sheet-title">Agent messages</h1>
-      <p class="lede">Events and schedules trigger messages. Fire one to try it.</p>
+<!-- ================= INSPECTOR ================= -->
+<section class="view" id="v-insp">
+  <div class="shell">
+    <aside class="side">
+      <div class="logo">
+        <svg width="30" height="30" viewBox="0 0 34 34" aria-hidden="true"><rect x="2" y="16" width="5" height="16" fill="#f8bd32"/><rect x="9" y="8" width="5" height="24" fill="#f8bd32"/><rect x="16" y="2" width="5" height="30" fill="#f8bd32"/><rect x="23" y="12" width="5" height="20" fill="#f8bd32"/></svg>
+        <div><b>PITTSBURGH</b><span>Inspections</span></div>
+      </div>
+      <div class="sec">Today</div>
+      <button class="nav" aria-current="true"><span>Video inspections</span><span class="cnt" id="iCount">2</span></button>
+      <div class="alerts" id="inspAlerts"><b>Agent alerts</b><span>No alerts yet.</span></div>
+      <div class="user"><span class="av">RI</span><div>Building inspector<br><span style="font-size:12px;color:#9fb0d6"><span class="ph" style="border-color:#9fb0d6">[R. Inspector]</span></span></div></div>
+    </aside>
+    <div class="content">
+      <div>
+        <div class="eyebrow">Virtual inspections</div>
+        <h1 class="title">Today's video calls</h1>
+        <p class="muted">Homeowners film the agent's shot list first. You see the evidence before the call.</p>
+      </div>
+      <div class="card" style="overflow-x:auto">
+        <table class="q"><thead><tr><th>Time</th><th>Address</th><th>Work</th><th>Shots</th></tr></thead><tbody id="iBody"></tbody></table>
+      </div>
+      <div id="iDetail" class="stack"></div>
     </div>
-  </div>
-
-  <div class="msg-grid">
-    <div class="notes">
-      <div class="notes-head"><span class="cond">To Laurel and her contractor</span><span class="mono">app · text · email</span></div>
-      <div id="trigApplicant"></div>
-    </div>
-    <div class="notes">
-      <div class="notes-head"><span class="cond">To city staff</span><span class="mono">dashboard · digest</span></div>
-      <div id="trigStaff"></div>
-    </div>
-  </div>
-
-  <div class="limits">
-    <div><span class="cond" style="font-size:18px">Limits</span></div>
-    <div><span class="mono">01</span><b>Can remind, explain and draft</b></div>
-    <div><span class="mono">02</span><b>Never submits, pays or decides</b></div>
-    <div><span class="mono">03</span><b>Max 1 nudge a day, quiet hours <span class="ph" title="Design choice, not a city rule">[design choice]</span></b></div>
-  </div>
-
-  <div style="margin-top:24px">
-    <div class="notes-head" style="border-top:2px solid var(--navy);background:var(--paper)"><span class="cond">Message log</span><span class="mono" id="logCount">0 sent</span></div>
-    <div class="log" id="log"></div>
   </div>
 </section>
 
 </main>
 
-<footer class="foot">
-  <span>All names, addresses, scores, dates and permit numbers are simulated. <span class="ph">[Dotted]</span> = placeholder.</span>
-  <span>← → keys move between screens</span>
-</footer>
+<footer class="foot">Student prototype for CMU Design of AI Products &amp; Systems. Not a City of Pittsburgh system. All names, addresses and numbers are simulated; <span class="ph">dotted</span> text is a placeholder.</footer>
 
 <script>
 (() => {
 const $ = (s, r=document) => r.querySelector(s);
 const $$ = (s, r=document) => [...r.querySelectorAll(s)];
 const wait = ms => new Promise(r => setTimeout(r, ms));
-
-/* ---------------- Screens ---------------- */
-const SHEETS = [
-  {id:'precheck', n:'RC-1', t:'Pre-check',      who:'Laurel · applicant'},
-  {id:'plan',     n:'RC-2', t:'Plan read',      who:'Application technician'},
-  {id:'queue',    n:'RC-3', t:'Staff queue',    who:'City staff'},
-  {id:'video',    n:'RC-4', t:'Video check',    who:'Laurel → inspector'},
-  {id:'msgs',     n:'RC-5', t:'Agent messages', who:'Everyone'},
-];
-let current = 'precheck';
-function renderNav(){
-  $('#nav').innerHTML = SHEETS.map(s =>
-    `<button data-sheet="${s.id}" aria-current="${s.id===current}"><span class="n">${s.n}</span><span class="t">${s.t}</span><span class="who">${s.who}</span>${s.id==='msgs' && state.log.length ? `<span class="badge">${state.log.length}</span>`:''}</button>`).join('');
-}
-function go(id){
-  current = id;
-  $$('.sheet').forEach(el => el.classList.toggle('on', el.id === 's-'+id));
-  renderNav();
-  window.scrollTo({top:0, behavior:'smooth'});
-  try { localStorage.setItem('rc-sheet', id); } catch(e){}
-}
-document.addEventListener('click', e => {
-  const b = e.target.closest('[data-sheet],[data-goto]');
-  if (b) go(b.dataset.sheet || b.dataset.goto);
-});
-document.addEventListener('keydown', e => {
-  if (e.target.matches('input,textarea')) return;
-  const i = SHEETS.findIndex(s => s.id === current);
-  if (e.key === 'ArrowRight' && i < SHEETS.length-1) go(SHEETS[i+1].id);
-  if (e.key === 'ArrowLeft' && i > 0) go(SHEETS[i-1].id);
-});
+const PH = t => `<span class="ph">${t}</span>`;
 
 /* ---------------- State ---------------- */
 let state;
-function freshState(){
-  return {
-    pc:'idle',            // idle | running | issue | fixing | ready | submitted
-    planSel:null, s1:'missing', planAccepted:false,
-    queueSel:'laurel', issued:false, sentBack:false,
-    shot:0, closer:false, shots:[false,false,false,false], slot:null, booked:false, insp:null,
-    log:[], fired:{},
-  };
-}
-state = freshState();
-
-/* simulated clock */
-const CLOCK = ['Mon 9:12 AM','Mon 9:14 AM','Mon 2:40 PM','Tue 8:00 AM','Tue 10:05 AM','Wed 11:30 AM','Thu 4:15 PM','Fri 7:12 PM','Fri 7:20 PM','Mon 10:00 AM','Mon 10:25 AM','Mon 10:40 AM'];
-function stamp(){ return CLOCK[Math.min(state.log.length, CLOCK.length-1)] + ' [sim]'; }
-
-function send(to, channel, text, toastId){
-  state.log.push({time:stamp(), to, channel, text});
-  renderLog(); renderNav();
-  if (toastId) toast(toastId, text);
-}
-function toast(id, text){
-  const t = $('#'+id); if(!t) return;
-  $('.tx', t).textContent = text;
-  t.classList.add('on');
-  clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('on'), 3600);
-}
-
-/* ================= RC-1 PRE-CHECK ================= */
-const PC_CHECKS = [
-  {k:'type', ic:'i', cls:'st-eye', t:'Standard permit, not EZ', s:'W-3 is enlarged, so drawings are needed.', src:'Rule: Standard Permit Application Requirements Guideline <span class="ph">[section]</span>', tag:'INFO'},
-  {k:'parcel', ic:'✓', cls:'st-ok', t:'Not historic, floodplain or condemned', s:'Parcel checked against city map layers.', src:'Source: city map layers <span class="ph">[simulated lookup]</span>', tag:'OK'},
-  {k:'lic', ic:'✓', cls:'st-ok', t:'Contractor license active', s:'Expires in 212 days <span class="ph">[sim]</span>.', src:'Source: city contractor license records', tag:'OK'},
-  {k:'draw', ic:'✓', cls:'st-ok', t:'Drawings uploaded and readable', s:'A-1, A-2.', src:'Model: document AI', tag:'OK'},
-  {k:'form', ic:'✓', cls:'st-ok', t:'Form complete', s:'Names and address match.', src:'Model: document AI + rules', tag:'OK'},
-  {k:'ins', ic:'!', cls:'st-miss', t:'Insurance name doesn\'t match', s:'"Windows LLC" vs tax record "Window Co LLC".', src:'Rule: city licensing page, certificate of insurance (named insured must match)', tag:'FIX', fix:true},
-];
-function pcNotes(){
-  $('#pcNotes').innerHTML = PC_CHECKS.map((c,i) => {
-    let tag = '—', cls='st-wait';
-    if (state.pc !== 'idle' && state.pc !== 'running'){ tag = c.tag; cls = c.cls; }
-    if (c.fix && (state.pc==='ready' || state.pc==='submitted')){ tag='FIXED'; cls='st-ok'; }
-    return `<div class="nrow"><div class="num">${String(i+1).padStart(2,'0')}</div><div class="body"><span class="t">${c.t}</span><span class="src">${c.src}</span></div><div class="tag ${cls}">${tag}</div></div>`;
-  }).join('');
-}
-async function runPrecheck(recheck=false){
-  state.pc = 'running';
-  const btn = $('#pcBtn'); btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Checking…';
-  $('#pcResult').innerHTML = '';
-  const box = $('#pcChecks'); box.innerHTML = '';
-  pcNotes();
-  for (const c of PC_CHECKS){
-    const fixed = recheck && c.fix;
-    const el = document.createElement('div');
-    el.className = 'chk' + (c.fix && !fixed ? ' fix' : '');
-    el.innerHTML = `<div class="ic ${fixed?'st-ok':c.cls}">${fixed?'✓':c.ic}</div><div><div class="t">${fixed?'Insurance name matches':c.t}</div><div class="s">${fixed?'New certificate: "Three Rivers Window Co LLC".':c.s}</div></div>`;
-    box.appendChild(el);
-    await wait(recheck ? 140 : 380);
-    el.classList.add('show');
-  }
-  await wait(250);
-  btn.disabled = false;
-  if (!recheck){
-    state.pc = 'issue';
-    $('#pcResult').innerHTML = `<div class="result st-miss">1 item to fix</div><div style="font-size:13px;color:var(--gray)">Ask your contractor for a corrected certificate.</div>`;
-    btn.textContent = 'Upload corrected certificate';
-    $('#pcStory').innerHTML = '<b>1 item to fix.</b> Upload the corrected certificate.';
-  } else {
-    state.pc = 'ready';
-    $('#pcResult').innerHTML = `<div class="result st-ok">Ready to submit</div><div style="font-size:13px;color:var(--gray)">Ready means complete. City staff still review and decide.</div>`;
-    btn.textContent = 'Submit application';
-    $('#pcStory').innerHTML = 'All clear. Laurel submits herself.';
-  }
-  pcNotes();
-}
-$('#pcBtn').addEventListener('click', async () => {
-  if (state.pc === 'idle') return runPrecheck(false);
-  if (state.pc === 'issue'){
-    state.pc = 'fixing';
-    const btn = $('#pcBtn'); btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Uploading certificate.pdf…';
-    await wait(900);
-    return runPrecheck(true);
-  }
-  if (state.pc === 'ready'){
-    state.pc = 'submitted';
-    const btn = $('#pcBtn'); btn.disabled = true; btn.textContent = 'Submitted ✓';
-    $('#pcStep').textContent = 'SUBMITTED';
-    $('#pcResult').innerHTML = `<div class="result st-ok">Submitted</div><div style="font-size:13px;color:var(--gray)">Application no. <span class="ph">[APP-2026-XXXX]</span>. Standard review is 15 to 30 business days.</div>`;
-    send('Laurel', 'App', 'Submitted, complete on the first try. I\'ll ping you when a reviewer comments.', 'toast1');
-    $('#pcStory').innerHTML = 'Submitted. Next: city side.';
-    pcNotes();
-  }
+const fresh = () => ({
+  view:'app', cpage:'queue',
+  pc:'idle',               // idle | running | issue | fixing | ready | submitted
+  s1:'missing',            // missing | requested | received
+  planSel:null, accepted:false, issued:false, sentBack:false,
+  shot:0, closer:false, shots:[false,false,false,false], slot:null, booked:false, insp:null,
+  msgs:[], seen:{app:0, city:0, insp:0},
 });
+state = fresh();
 
-/* ================= RC-2 PLAN READ ================= */
-const PINS = [
-  {id:1, x:1010, y:400, c:'#3FB673', st:'ok',   t:'Title block matches the application', model:'Document AI', to:'TECH', why:'Owner name and address on the title block match the form Laurel submitted.', rule:'Standard Permit Application Requirements Guideline <span class="ph">[section]</span>'},
-  {id:2, x:1010, y:580, c:'#3FB673', st:'ok',   t:'Scale found, plan is measurable', model:'Vision language model', to:'TECH', why:'Scale 1/4in = 1ft read from the title block and checked against the 24\'-0" dimension.', rule:'Drawing standards <span class="ph">[section]</span>'},
-  {id:3, x:720, y:170, c:'#F2B705', st:'eye',  t:'W-3 enlarged opening has no size', model:'Vision language model', conf:0.71, to:'REVIEWER', why:'W-1, W-2 and W-4 show 30x48. W-3 is marked but has no width or height. Bedroom windows matter for the emergency escape opening rule.', rule:'Residential code, emergency escape openings <span class="ph">[section]</span>'},
-  {id:4, x:1010, y:174, c:'#E8590C', st:'miss', t:'S-1 site plan listed but not uploaded', model:'Document AI + rules', to:'TECH', why:'The sheet index lists S-1 SITE PLAN. Only A-1 and A-2 were uploaded.', rule:'Standard Permit Application Requirements Guideline <span class="ph">[section]</span>'},
-  {id:5, x:676, y:290, c:'#F2B705', st:'eye',  t:'New header over W-3: size not shown', model:'Vision language model', conf:0.58, to:'REVIEWER', why:'A new header is drawn over the wider opening but has no member size. The agent can\'t tell if it is adequate, so a person decides.', rule:'Structural, reviewer judgment. Never cleared by the agent.'},
-];
-const ST_TAG = {ok:['st-ok','OK'], miss:['st-miss','MISSING'], eye:['st-eye','HUMAN EYES']};
-function renderPins(){
-  $('#pins').innerHTML = PINS.map(p => {
-    let col = p.c;
-    if (p.id===4 && state.s1==='received') col = '#3FB673';
-    return `<g class="pin ${state.planSel===p.id?'sel':''}" data-pin="${p.id}" tabindex="0" role="button" aria-label="Finding ${p.id}"><circle cx="${p.x}" cy="${p.y}" r="20" fill="${col}" stroke="#13233A" stroke-width="3"/><text x="${p.x}" y="${p.y+8}" font-family="Barlow Condensed, sans-serif" font-size="24" font-weight="700" fill="#13233A" text-anchor="middle" pointer-events="none">${p.id}</text></g>`;
-  }).join('');
+/* messages: who = app | city | insp */
+function send(who, from, channel, text){
+  state.msgs.push({who, from, channel, text});
+  if (who === 'app') toast(text);
+  renderMsgs(); renderGuide();
 }
-function renderPlanNotes(){
-  $('#planNotes').innerHTML = PINS.map(p => {
-    let [cls, tag] = ST_TAG[p.st];
-    if (p.id===4 && state.s1==='requested'){ cls='st-wait'; tag='REQUESTED'; }
-    if (p.id===4 && state.s1==='received'){ cls='st-ok'; tag='RECEIVED'; }
-    const conf = p.conf ? ` ${p.conf.toFixed(2)}` : '';
-    return `<div class="nrow clickable ${state.planSel===p.id?'sel':''}" data-pinrow="${p.id}"><div class="num">${String(p.id).padStart(2,'0')}</div><div class="body"><span class="t">${p.t}</span><span class="src">${p.model.toUpperCase()}${conf} · TO ${p.to}</span></div><div class="tag ${cls}">${tag}</div></div>`;
-  }).join('');
+function toast(text){
+  const t = $('#toast'); $('.tx', t).textContent = text;
+  t.classList.add('on'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('on'), 3400);
 }
-function selectPin(id){
-  state.planSel = id;
-  const p = PINS.find(x => x.id === id);
-  $('#planDetail').innerHTML = `<span class="lbl">Finding ${String(id).padStart(2,'0')} · goes to ${p.to==='TECH'?'application technician':'plan reviewer (as a note)'}</span>
-    <p><b>${p.t}.</b> ${p.why}</p>
-    <p class="mono" style="font-size:11.5px;color:var(--gray)">${p.model}${p.conf?` · confidence ${p.conf.toFixed(2)} <span class="ph">[sim]</span> · below 0.80 routes to a person`:''}</p>
-    <p class="mono" style="font-size:11.5px;color:var(--gray)">${p.rule}</p>`;
-  renderPins(); renderPlanNotes();
+
+/* ---------------- Views ---------------- */
+function show(v){
+  state.view = v;
+  $$('.view').forEach(el => el.classList.toggle('on', el.id === 'v-'+v));
+  $$('.roles button').forEach(b => b.setAttribute('aria-selected', b.dataset.view === v));
+  state.seen[v] = state.msgs.filter(m => m.who === v).length;
+  renderMsgs(); renderGuide();
+  try { localStorage.setItem('rc-view', v); } catch(e){}
 }
 document.addEventListener('click', e => {
-  const pin = e.target.closest('[data-pin]'); if (pin) return selectPin(+pin.dataset.pin);
-  const row = e.target.closest('[data-pinrow]'); if (row) return selectPin(+row.dataset.pinrow);
+  const r = e.target.closest('[data-view]'); if (r) show(r.dataset.view);
+  const c = e.target.closest('[data-cpage]'); if (c){ state.cpage = c.dataset.cpage; renderCity(); }
+});
+
+/* ---------------- Guide band ---------------- */
+function guide(){
+  const s = state;
+  if (s.pc !== 'submitted') return [1,'app', s.pc==='idle' ? 'Laurel checks her application before she submits it.' : s.pc==='issue' ? 'The agent found 1 thing to fix. Laurel uploads a corrected certificate.' : 'All clear. Laurel submits it herself.'];
+  if (s.sentBack) return [3,null,'A person sent the file back. Press Reset to try the issue path.'];
+  if (s.s1 === 'missing') return [2,'city','The technician opens Laurel\'s file. The agent flagged a missing site plan.'];
+  if (s.s1 === 'requested') return [2,'app','The city asked for sheet S-1. Laurel uploads it.'];
+  if (!s.accepted) return [3,'city','S-1 is in. The technician accepts the file.'];
+  if (!s.issued) return [3,'city','Only a person can issue. Tick the 3 checks and issue the permit.'];
+  if (s.shot < 4) return [4,'app','Permit issued. Laurel films 4 shots. The agent checks each one.'];
+  if (!s.booked) return [4,'app','All shots pass. Laurel books a video inspection.'];
+  if (!s.insp) return [5,'insp','The inspector reviews the pre-checked shots and decides.'];
+  return [6,'app', s.insp==='pass' ? 'Passed. Laurel gets the close-out steps. Demo done.' : 'Failed. The agent explains the fix to Laurel. Demo done.'];
+}
+const VIEWNAME = {app:'Applicant', city:'City dashboard', insp:'Inspector'};
+function renderGuide(){
+  const [n, v, txt] = guide();
+  $('#gStep').textContent = `Step ${n} of 6`;
+  $('#gTxt').textContent = txt;
+  const g = $('#gGo');
+  if (v && v !== state.view){ g.hidden = false; g.textContent = `Go to ${VIEWNAME[v]} →`; g.dataset.view = v; }
+  else { g.hidden = true; delete g.dataset.view; }
+}
+
+/* ================= APPLICANT ================= */
+const PC = [
+  {t:'Standard permit, not EZ', s:'W-3 gets bigger, so drawings are needed.', k:'eye', ic:'i'},
+  {t:'Not historic, floodplain or condemned', s:'Checked against city map layers.', k:'ok', ic:'✓'},
+  {t:'Contractor license is active', s:'Expires in 212 days ' + PH('[sim]') + '.', k:'ok', ic:'✓'},
+  {t:'Drawings uploaded and readable', s:'Sheets A-1 and A-2.', k:'ok', ic:'✓'},
+  {t:'Form complete', s:'Names and address match.', k:'ok', ic:'✓'},
+  {t:'Insurance name doesn\'t match', s:'"Windows LLC" vs. tax record "Window Co LLC".', k:'miss', ic:'!', fix:true},
+];
+function phone(){
+  const s = state, body = $('#phoneBody');
+  // camera stage
+  if (s.issued && s.shot < 4){
+    $('#aStage').textContent = 'Step 2 of 2';
+    body.innerHTML = `<div class="cam"><div class="rec"><i></i>LIVE</div><div class="shotlbl">Shot ${s.shot+1} of 4</div><svg id="camSvg" viewBox="0 0 356 440" preserveAspectRatio="xMidYMid slice"></svg><div class="cam-msg info" id="camMsg"></div></div>
+      <div class="afoot"><div style="font-weight:600">${SHOTS[s.shot].t}</div><div class="progress">${s.shots.map((d,k)=>`<i class="${d?'done':k===s.shot?'cur':''}"></i>`).join('')}</div>
+      <div style="display:flex;gap:8px">${s.shot===2 && !s.closer ? '<button class="btn" id="closerBtn" style="flex:1">Move closer</button>' : ''}<button class="btn gold" id="captureBtn" style="flex:1" ${s.shot===2 && !s.closer ? 'disabled':''}>Capture shot</button></div></div>`;
+    cam();
+    return;
+  }
+  $('#aStage').textContent = s.issued ? 'Step 2 of 2' : 'Step 1 of 2';
+  let main = '', foot = '';
+  if (s.issued && !s.booked){
+    main = `<div class="q">Book your video inspection</div><p class="small muted">All 4 shots passed the agent's check. Pick a time.</p>
+      <div class="slots">${SLOTS.map(x=>`<button class="slot ${s.slot===x?'sel':''}" data-slot="${x}">${x}<small>20 min · video ${PH('[sim]')}</small></button>`).join('')}</div>`;
+    foot = `<button class="btn primary block" id="bookBtn" ${s.slot?'':'disabled'}>Book ${s.slot||'a time'}</button>`;
+  } else if (s.booked && !s.insp){
+    main = `<div class="bigstate"><div class="ico" style="background:var(--sky);color:var(--navy)">📅</div><div class="q">Booked</div><div class="muted">Video inspection ${s.slot}. Your 4 shots are already with the inspector.</div></div>`;
+  } else if (s.insp){
+    main = s.insp==='pass'
+      ? `<div class="bigstate"><div class="ico" style="background:var(--green-lt);color:var(--green)">✓</div><div class="q">Inspection passed</div><div class="muted">Upload 1 close-out document to finish.</div></div>`
+      : `<div class="bigstate"><div class="ico" style="background:var(--red-lt);color:var(--red)">!</div><div class="q">Needs a fix</div><div class="muted">Read the inspector's note in Messages, then book a re-check.</div></div>`;
+    foot = s.insp==='pass' ? '<button class="btn gold block" disabled>Upload close-out document</button>' : '<button class="btn primary block" disabled>Book a re-check</button>';
+  } else if (s.pc === 'submitted'){
+    if (s.s1 === 'requested'){
+      main = `<div class="q">The city needs 1 more sheet</div>
+        <div class="reqcard"><b>Site plan, sheet S-1</b><span class="small">Your drawings list S-1, but it wasn't uploaded.</span><span class="small muted">Asked by the application technician</span></div>`;
+      foot = '<button class="btn gold block" id="upS1">Upload S-1</button>';
+    } else if (s.sentBack){
+      main = `<div class="bigstate"><div class="ico" style="background:var(--red-lt);color:var(--red)">↩</div><div class="q">Sent back</div><div class="muted">See Messages for what staff need.</div></div>`;
+    } else {
+      main = `<div class="bigstate"><div class="ico" style="background:var(--sky);color:var(--navy)">⏳</div><div class="q">In city review</div><div class="muted">Submitted complete. Standard review is 15 to 30 business days. ${s.s1==='received'?'<br><b>S-1 received.</b>':''}</div></div>`;
+    }
+  } else {
+    main = `<div class="q">Is my application ready?</div>
+      <div class="sum"><div><b>Address</b><span>${PH('[1234 Example St]')}</span></div><div><b>Work</b><span>Replace 4 windows, enlarge W-3</span></div><div><b>Uploads</b><span>Form · A-1, A-2 · Insurance</span></div></div>
+      <div id="pcChecks" style="display:flex;flex-direction:column;gap:6px"></div><div id="pcResult"></div>`;
+    const lbl = {idle:'Check my application', issue:'Upload corrected certificate', ready:'Submit application'}[s.pc] || '';
+    foot = `<button class="btn gold block" id="pcBtn">${lbl}</button>`;
+  }
+  body.innerHTML = `<div class="abody">${main}</div>${foot?`<div class="afoot">${foot}</div>`:''}`;
+  if (s.pc === 'issue' || s.pc === 'ready') drawChecks(s.pc === 'ready', true);
+}
+function drawChecks(fixed, instant){
+  const box = $('#pcChecks'); if (!box) return [];
+  box.innerHTML = PC.map(c => {
+    const f = fixed && c.fix;
+    return `<div class="chk ${c.fix && !f ? 'fix':''} ${instant?'show':''}"><span class="ic ${f?'ok':c.k}" style="width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700">${f?'✓':c.ic}</span><div><div style="font-weight:600">${f?'Insurance name matches':c.t}</div><div class="s">${f?'New certificate: "Three Rivers Window Co LLC".':c.s}</div></div></div>`;
+  }).join('');
+  $('#pcResult').innerHTML = !instant ? '' : fixed
+    ? '<div class="result ok">Ready to submit</div><div class="small muted">Ready means complete. City staff still review and decide.</div>'
+    : '<div class="result miss">1 thing to fix</div><div class="small muted">Ask your contractor for a corrected insurance certificate.</div>';
+  return $$('.chk', box);
+}
+async function runCheck(fixed){
+  const btn = $('#pcBtn'); btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Checking…';
+  for (const el of drawChecks(fixed, false)){ await wait(fixed ? 140 : 360); el.classList.add('show'); }
+  await wait(250);
+  state.pc = fixed ? 'ready' : 'issue';
+  if (!fixed) send('app','Ready-Check','App','1 thing to fix: your insurance name doesn\'t match your tax record.');
+  phone(); renderApp(); renderGuide();
+}
+document.addEventListener('click', async e => {
+  const t = e.target;
+  if (t.closest('#pcBtn')){
+    if (state.pc === 'idle'){ state.pc = 'running'; return runCheck(false); }
+    if (state.pc === 'issue'){
+      state.pc = 'fixing'; const b = $('#pcBtn'); b.disabled = true; b.innerHTML = '<span class="spinner"></span> Uploading certificate.pdf…';
+      await wait(800); return runCheck(true);
+    }
+    if (state.pc === 'ready'){
+      state.pc = 'submitted';
+      send('app','Ready-Check','App','Submitted complete on the first try. I\'ll tell you when the city responds.');
+      send('city','Ready-Check','Dashboard','New file: [1234 Example St], windows. 1 sheet missing (S-1).');
+      renderAll();
+    }
+  }
+  if (t.closest('#upS1')){
+    state.s1 = 'received';
+    send('city','Ready-Check','Dashboard','S-1 received for [1234 Example St]. All 3 sheets on file.');
+    send('app','Ready-Check','App','Got it. S-1 is with the technician.');
+    renderAll();
+  }
+  const sl = t.closest('[data-slot]');
+  if (sl && !state.booked){ state.slot = sl.dataset.slot; phone(); }
+  if (t.closest('#bookBtn') && state.slot){
+    state.booked = true;
+    send('app','Ready-Check','Text',`Booked: video inspection ${state.slot}. I'll remind you the night before.`);
+    send('insp','Ready-Check','Calendar',`New video inspection ${state.slot}: [1234 Example St]. 4 shots pre-checked.`);
+    renderAll();
+  }
+  if (t.closest('#captureBtn')){
+    state.shots[state.shot] = true; state.shot++;
+    if (state.shot === 4) send('app','Ready-Check','App','All 4 shots look good. Pick an inspection time.');
+    phone(); renderApp(); renderGuide();
+  }
+  if (t.closest('#closerBtn')){ state.closer = true; phone(); }
+});
+
+const SLOTS = ['Mon 10:00 AM','Mon 1:30 PM','Tue 9:00 AM','Tue 3:00 PM'];
+function renderApp(){
+  const s = state;
+  const steps = [
+    ['Check before submitting', 'Agent checks 6 things.', s.pc==='submitted'],
+    ['City review', s.s1==='requested' ? 'City asked for sheet S-1.' : 'A technician reviews the file.', s.issued],
+    ['Permit issued', 'Issued by a person.', s.issued],
+    ['Site check', 'Film 4 shots. The agent checks them.', s.shot>=4],
+    ['Video inspection', s.booked ? s.slot : 'Book a time.', !!s.insp],
+  ];
+  const cur = steps.findIndex(x => !x[2]);
+  $('#aSteps').innerHTML = steps.map((x,i) => `<li class="${x[2]?'done':i===cur?'cur':''}"><span class="b">${x[2]?'✓':i+1}</span><div><div class="t">${x[0]}</div><div class="s">${x[1]}</div></div></li>`).join('');
+  const pill = $('#aPill');
+  const [cls, txt] = s.insp==='pass' ? ['p-ok','Passed'] : s.insp ? ['p-miss','Needs a fix'] : s.sentBack ? ['p-miss','Sent back'] : s.issued ? ['p-ok','Permit issued'] : s.s1==='requested' ? ['p-eye','Action needed'] : s.pc==='submitted' ? ['p-info','In review'] : ['p-wait','Not submitted'];
+  pill.className = 'pill ' + cls; pill.textContent = txt;
+}
+
+/* camera */
+const SHOTS = [
+  {t:'Outside of W-3, whole frame', aim:'Point at the outside of window W-3.'},
+  {t:'Inside: sealant and trim', aim:'Now the inside edge, where frame meets wall.'},
+  {t:'Manufacturer label', aim:'Find the sticker on the glass or frame.'},
+  {t:'Opening width with a tape', aim:'Stretch a tape across the open sash.'},
+];
+const conf = b => (b + (Math.random()-.5)*0.02).toFixed(2);
+function windowScene(){
+  return `<rect width="356" height="440" fill="#3B4552"/><rect x="0" y="330" width="356" height="110" fill="#2C333D"/>
+  <rect x="70" y="60" width="216" height="260" fill="#8FB0D3" stroke="#E9E4DA" stroke-width="12"/><rect x="82" y="72" width="192" height="236" fill="#A9C4E0"/>
+  <line x1="178" y1="66" x2="178" y2="314" stroke="#E9E4DA" stroke-width="8"/><line x1="76" y1="190" x2="280" y2="190" stroke="#E9E4DA" stroke-width="8"/>
+  <path d="M100 90 L150 80 L120 140 Z" fill="#fff" opacity=".18"/>`;
+}
+const tag = (x,y,w,txt,col) => `<rect x="${x}" y="${y}" width="${w}" height="20" rx="3" fill="${col}"/><text x="${x+6}" y="${y+15}" font-family="Outfit, sans-serif" font-size="13" font-weight="600" fill="#1f1f1f">${txt}</text>`;
+function shotSvg(i, closer){
+  const G = '#3fb673', Y = '#f8bd32';
+  if (i === 0) return [windowScene() + `<g class="bbox"><rect x="56" y="46" width="244" height="288" fill="none" stroke="${G}" stroke-width="3"/>${tag(56,24,170,`window frame ${conf(.96)}`,G)}</g><g class="bbox b2"><rect x="62" y="300" width="232" height="30" fill="none" stroke="${G}" stroke-width="2.5" stroke-dasharray="7 5"/>${tag(62,334,100,`trim ${conf(.91)}`,G)}</g>`, ['ok','Whole frame in view. Capture now.']];
+  if (i === 1) return [`<rect width="356" height="440" fill="#D9D2C5"/><rect x="40" y="0" width="190" height="440" fill="#E9E4DA"/><rect x="60" y="0" width="150" height="440" fill="#A9C4E0"/><rect x="226" y="0" width="16" height="440" fill="#F5F2EC"/><rect x="242" y="0" width="114" height="440" fill="#CFC6B6"/>
+      <g class="bbox"><rect x="218" y="40" width="32" height="360" fill="none" stroke="${G}" stroke-width="3"/>${tag(150,16,180,`sealant edge ${conf(.88)}`,G)}</g>`, ['ok','Sealant bead continuous. No gaps.']];
+  if (i === 2){
+    let b = `<defs><filter id="bl${closer?1:0}"><feGaussianBlur stdDeviation="${closer?0:2.2}"/></filter></defs><g class="zoomable" style="transform-origin:236px 250px;transform:scale(${closer?2.3:1})">${windowScene()}<g filter="url(#bl${closer?1:0})"><rect x="206" y="232" width="60" height="38" fill="#F7F5F0"/><rect x="210" y="236" width="52" height="6" fill="#233b77"/><text x="212" y="252" font-family="monospace" font-size="7" fill="#1f1f1f">U-FACTOR 0.27</text><text x="212" y="262" font-family="monospace" font-size="7" fill="#1f1f1f">SHGC 0.30</text></g></g>`;
+    if (!closer) return [b + `<g class="bbox"><rect x="198" y="224" width="76" height="54" fill="none" stroke="${Y}" stroke-width="3"/>${tag(140,282,180,`label · blurry ${conf(.42)}`,Y)}</g>`, ['warn','Label found, but the text is blurry. Move closer.']];
+    return [b + `<g class="bbox"><rect x="158" y="198" width="156" height="108" fill="none" stroke="${G}" stroke-width="3"/>${tag(140,176,190,`label · readable ${conf(.94)}`,G)}</g><rect x="30" y="330" width="296" height="32" rx="4" fill="#1f1f1f" opacity=".85"/><text x="42" y="351" font-family="Outfit, sans-serif" font-size="14" fill="#fff">Read: U-factor 0.27 · SHGC 0.30</text>`, ['ok','Label readable. Capture now.']];
+  }
+  return [windowScene() + `<rect x="84" y="196" width="188" height="14" fill="${Y}"/><g class="bbox"><rect x="78" y="188" width="200" height="30" fill="none" stroke="${G}" stroke-width="3"/>${tag(78,166,160,`tape measure ${conf(.90)}`,G)}</g><rect x="20" y="300" width="316" height="34" rx="4" fill="#1f1f1f" opacity=".8"/><text x="32" y="322" font-family="Outfit, sans-serif" font-size="14" fill="#fff">Read: opening ≈ [24 in] wide</text>`, ['ok','Tape is readable. Capture now.']];
+}
+function cam(){
+  const svg = $('#camSvg'); if (!svg) return;
+  const [b, m] = shotSvg(state.shot, state.closer);
+  svg.innerHTML = b;
+  const el = $('#camMsg'); el.className = 'cam-msg ' + m[0]; el.textContent = m[1];
+}
+setInterval(() => { if (state.view==='app' && state.issued && state.shot<4) cam(); }, 900);
+
+function renderMsgs(){
+  const box = $('#aInbox');
+  const mine = state.msgs.filter(m => m.who==='app');
+  box.innerHTML = mine.length ? [...mine].reverse().map(m => `<div class="m"><div class="meta"><b>${m.from}</b><span>· ${m.channel}</span></div><div>${m.text.replace(/\[(.+?)\]/g, (x)=>PH(x))}</div></div>`).join('') : '<div class="empty">No messages yet.</div>';
+  for (const [who, el] of [['city','#cityAlerts'],['insp','#inspAlerts']]){
+    const list = state.msgs.filter(m => m.who===who).slice(-3).reverse();
+    $(el).innerHTML = '<b>Agent alerts</b>' + (list.length ? list.map(m => `<span>${m.text}</span>`).join('') : '<span>No alerts yet.</span>');
+  }
+  for (const [v,id] of [['app','#nApp'],['city','#nCity'],['insp','#nInsp']]){
+    if (state.view === v) state.seen[v] = state.msgs.filter(m => m.who===v).length;
+    const n = state.msgs.filter(m => m.who===v).length - state.seen[v];
+    const el = $(id); el.hidden = n <= 0; el.textContent = n;
+  }
+}
+
+/* ================= CITY DASHBOARD ================= */
+const QUEUE = [
+  {id:'oak', addr:'[Oak Ave]', work:'Roofing', days:'3', sort:['p-miss','Needs info']},
+  {id:'elm', addr:'[Elm St]', work:'Siding', days:'3', sort:['p-eye','Human check']},
+  {id:'pine', addr:'[Pine Way]', work:'Deck, 1 scope', days:'2', sort:['p-ok','Ready']},
+];
+function laurelSort(){
+  const s = state;
+  if (s.sentBack) return ['p-miss','Sent back'];
+  if (s.issued) return ['p-ok','Issued'];
+  if (s.accepted) return ['p-ok','Ready to issue'];
+  if (s.s1 === 'requested') return ['p-wait','Waiting on applicant'];
+  if (s.s1 === 'received') return ['p-ok','Complete'];
+  return ['p-miss','Needs info'];
+}
+const PINS = [
+  {id:1, x:1010, y:420, st:'ok', t:'Title block matches the application', who:'Technician', why:'Owner name and address on the drawing match the form.', model:'Document AI'},
+  {id:2, x:1010, y:545, st:'ok', t:'Scale found, plan is measurable', who:'Technician', why:'1/4in = 1ft, checked against the 24\'-0" dimension.', model:'Vision model'},
+  {id:3, x:720, y:170, st:'eye', t:'W-3 bigger opening has no size', who:'Plan reviewer', why:'W-1, W-2 and W-4 show 30x48. W-3 has no width or height. Bedroom windows must meet the emergency escape rule.', model:'Vision model · confidence 0.71 (below 0.80 goes to a person)'},
+  {id:4, x:1010, y:174, st:'miss', t:'Site plan S-1 listed but not uploaded', who:'Technician', why:'The sheet index lists S-1. Only A-1 and A-2 were uploaded.', model:'Document AI + rules'},
+  {id:5, x:676, y:300, st:'eye', t:'New header over W-3 has no size', who:'Plan reviewer', why:'Structural. The agent can\'t judge it, so a person decides.', model:'Vision model · confidence 0.58'},
+];
+const PINCOL = {ok:'#3fb673', miss:'#e05a47', eye:'#f8bd32'};
+const PILL = {ok:['p-ok','OK'], miss:['p-miss','Missing'], eye:['p-eye','Needs a person']};
+function pinState(p){
+  if (p.id !== 4) return p.st;
+  return state.s1 === 'received' ? 'ok' : 'miss';
+}
+function renderCity(){
+  const s = state;
+  // nav
+  $('#navFile').hidden = s.pc !== 'submitted';
+  if (s.pc !== 'submitted') s.cpage = 'queue';
+  $$('#v-city .nav[data-cpage]').forEach(b => b.setAttribute('aria-current', b.dataset.cpage === s.cpage));
+  $('#qCount').textContent = QUEUE.length + (s.pc==='submitted' ? 1 : 0);
+  $('#cQueue').hidden = s.cpage !== 'queue';
+  $('#cFile').hidden = s.cpage !== 'file';
+  // queue
+  const lr = s.pc === 'submitted'
+    ? `<tr class="click" data-cpage="file"><td><b>${PH('[1234 Example St]')}</b> <span class="pill p-info" style="margin-left:6px">New</span></td><td>Windows, W-3 bigger</td><td>0</td><td><span class="pill ${laurelSort()[0]}">${laurelSort()[1]}</span></td></tr>`
+    : `<tr class="dim"><td colspan="4">Laurel hasn't submitted yet. Start in the Applicant view.</td></tr>`;
+  $('#qBody').innerHTML = lr + QUEUE.map(q => `<tr><td>${PH(q.addr)}</td><td>${q.work}</td><td>${q.days}</td><td><span class="pill ${q.sort[0]}">${q.sort[1]}</span></td></tr>`).join('');
+  if (s.cpage !== 'file') return;
+  // stepper (adapted from Make: Submit / Review / Contractor / Inspections / Complete)
+  const stages = ['Submit','Review','Issue','Inspection','Complete'];
+  const at = s.insp ? 4 : s.issued ? 3 : s.accepted ? 2 : 1;
+  $('#cStepper').innerHTML = stages.map((x,i) => `<div class="${i<at?'done':i===at?'cur':''}"><small>0${i+1}</small>${i<at?'✓ ':''}${x}</div>`).join('');
+  // recommendation
+  let rec;
+  if (s.sentBack) rec = ['', 'Sent back', 'Sent back by a person', 'The agent explains the request to Laurel in plain words.'];
+  else if (s.issued) rec = ['good','Done', 'Permit issued by a person', 'The agent now guides Laurel through the site check.'];
+  else if (s.accepted) rec = ['good','Next step', 'Ready for your decision', 'All sheets on file. Notes 3 and 5 went to the plan reviewer.'];
+  else if (s.s1 === 'received') rec = ['good','Agent recommendation', 'Packet complete. Accept the file.', 'S-1 arrived. The agent re-read the sheet index: all 3 sheets on file.'];
+  else if (s.s1 === 'requested') rec = ['', 'Waiting', 'Waiting for Laurel to upload S-1', 'The agent sent her a plain-language request.'];
+  else rec = ['', 'Agent recommendation', 'Ask Laurel for the site plan', 'Sheet S-1 is listed on the drawings but missing. 2 notes need a plan reviewer.'];
+  const recBtn = (!s.accepted && !s.sentBack) ? (s.s1==='missing' ? '<button class="btn primary sm" id="reqS1">Request S-1</button>' : s.s1==='received' ? '<button class="btn primary sm" id="acceptBtn">Accept file</button>' : '') : '';
+  const r = $('#cRec'); r.className = 'rec ' + rec[0];
+  r.innerHTML = `<div style="flex:1"><div class="lbl">${rec[1]}</div><h3>${rec[2]}</h3><p>${rec[3]}</p><p class="small" style="margin-top:4px">A recommendation, not a decision.</p></div><div style="align-self:center">${recBtn}</div>`;
+  // pins + list
+  $('#pins').innerHTML = PINS.map(p => `<g class="pin ${s.planSel===p.id?'sel':''}" data-pin="${p.id}" tabindex="0" role="button" aria-label="Finding ${p.id}"><circle cx="${p.x}" cy="${p.y}" r="20" fill="${PINCOL[pinState(p)]}" stroke="#1a2c5a" stroke-width="3"/><text x="${p.x}" y="${p.y+8}" font-family="Outfit, sans-serif" font-size="22" font-weight="700" fill="#1f1f1f" text-anchor="middle" pointer-events="none">${p.id}</text></g>`).join('');
+  $('#planList').innerHTML = PINS.map(p => {
+    const st = pinState(p); let [c, l] = PILL[st];
+    if (p.id===4 && s.s1==='requested'){ c='p-wait'; l='Requested'; }
+    if (p.id===4 && s.s1==='received') l='Received';
+    return `<div class="rowi click ${s.planSel===p.id?'sel':''}" data-pin="${p.id}"><span class="ic ${st}">${p.id}</span><div><div class="t">${p.t}</div><div class="src">To: ${p.who}</div></div><span class="pill ${c}">${l}</span></div>`;
+  }).join('');
+  const p = PINS.find(x => x.id === s.planSel);
+  $('#planDetail').innerHTML = p ? `<b>${p.id}. ${p.t}</b><span>${p.why}</span><span class="small muted">${p.model} · goes to ${p.who.toLowerCase()}</span>` : '<span class="muted">Pick a finding to see why the agent flagged it and who it goes to.</span>';
+  // packet
+  const docs = [
+    ['Application form','3 pages','p-ok','Read'],
+    ['Drawings A-1, A-2','Floor plan, elevations','p-ok','Read'],
+    ['Site plan S-1', s.s1==='received'?'Uploaded by Laurel':'Listed, not uploaded', s.s1==='received'?'p-ok':s.s1==='requested'?'p-wait':'p-miss', s.s1==='received'?'Read':s.s1==='requested'?'Requested':'Missing'],
+    ['Insurance certificate','Name matches tax record','p-ok','Read'],
+  ];
+  $('#packet').innerHTML = docs.map(d => `<div class="doc"><span class="f">PDF</span><div><div style="font-weight:600">${d[0]}</div><div class="small muted">${d[1]}</div></div><span class="pill ${d[2]}">${d[3]}</span></div>`).join('');
+  $('#pkCount').textContent = `${docs.filter(d=>d[2]==='p-ok').length} of 4`;
+  gate();
+}
+function gate(){
+  const s = state, on = s.accepted && !s.issued && !s.sentBack;
+  $$('#gate input').forEach(i => i.disabled = !on);
+  const all = $('#c1').checked && $('#c2').checked && $('#c3').checked;
+  $('#issueBtn').disabled = !on || !all;
+  $('#sendBackBtn').disabled = s.issued || s.sentBack || s.pc !== 'submitted';
+  $('#gateHint').innerHTML = s.issued ? '✓ Issued by <span class="ph">[J. Technician]</span>, a person. Permit ' + PH('[BP-2026-XXXXX]') + '.'
+    : s.sentBack ? 'Sent back by a person.'
+    : !s.accepted ? '🔒 Accept the file first.'
+    : all ? 'All confirmed. Your call.' : '🔒 The agent can\'t press these buttons.';
+}
+document.addEventListener('change', e => { if (e.target.closest('#gate')) gate(); });
+document.addEventListener('click', e => {
+  const pin = e.target.closest('[data-pin]');
+  if (pin){ state.planSel = +pin.dataset.pin; renderCity(); }
+  if (e.target.closest('#reqS1')){
+    state.s1 = 'requested'; state.planSel = 4;
+    send('app','City of Pittsburgh','Email','Please upload sheet S-1 (site plan). It\'s listed on your drawings but missing.');
+    renderAll();
+  }
+  if (e.target.closest('#acceptBtn')){ state.accepted = true; renderAll(); }
+  if (e.target.closest('#issueBtn')){
+    state.issued = true;
+    send('app','City of Pittsburgh','Text','Permit issued. Next: film 4 short shots of the new window so the inspector can check it by video.');
+    renderAll();
+  }
+  if (e.target.closest('#sendBackBtn')){
+    state.sentBack = true;
+    send('app','City of Pittsburgh','Email','Staff sent your file back. What they need, in plain words: [staff comment]. Reply and I\'ll check your fix first.');
+    renderAll();
+  }
 });
 document.addEventListener('keydown', e => {
   const pin = e.target.closest && e.target.closest('[data-pin]');
-  if (pin && (e.key==='Enter' || e.key===' ')){ e.preventDefault(); selectPin(+pin.dataset.pin); }
-});
-function planButtons(){
-  const r = $('#reqS1'), a = $('#acceptPlan');
-  r.disabled = state.s1 !== 'missing' || state.planAccepted;
-  r.textContent = state.s1==='missing' ? 'Request S-1' : state.s1==='requested' ? 'S-1 requested' : 'S-1 received ✓';
-  a.disabled = state.planAccepted;
-  a.textContent = state.planAccepted ? 'Accepted ✓' : 'Accept';
-  a.classList.toggle('primary', state.s1==='received' && !state.planAccepted);
-}
-$('#reqS1').addEventListener('click', async () => {
-  selectPin(4);
-  state.s1 = 'requested'; planButtons(); renderPlanNotes();
-  $('#planStatus').textContent = 'Technician sent the agent\'s drafted request to Laurel.';
-  send('Laurel', 'Email', 'Please upload sheet S-1 (site plan). It\'s listed on your drawings but missing.');
-  $('#planStory').innerHTML = 'Request sent. Laurel uploads S-1 <span class="ph">[simulated]</span>…';
-  await wait(2000);
-  state.s1 = 'received'; planButtons(); renderPins(); renderPlanNotes();
-  $('#planStatus').textContent = 'S-1 received. Agent re-read the sheet index: all 3 sheets on file.';
-  send('Technician', 'Dashboard', 'S-1 received. All 3 sheets on file.');
-  $('#planStory').innerHTML = 'S-1 arrived. Press <b>Accept</b>.';
-});
-$('#acceptPlan').addEventListener('click', () => {
-  state.planAccepted = true; planButtons();
-  $('#planStatus').textContent = state.s1==='received'
-    ? 'Accepted by technician. Notes 3 and 5 sent to plan reviewer.'
-    : 'Accepted by technician with S-1 still missing (technician\'s call).';
-  $('#planStory').innerHTML = 'Accepted. Next: staff queue.';
-  renderQueue();
+  if (pin && (e.key==='Enter' || e.key===' ')){ e.preventDefault(); state.planSel = +pin.dataset.pin; renderCity(); }
 });
 
-/* ================= RC-3 STAFF QUEUE ================= */
-const QUEUE = [
-  {id:'laurel', addr:'[1234 Example St]', work:'Windows (W-3 enlarged)', sub:'Mon', days:'4', sort:'ready'},
-  {id:'oak', addr:'[Oak Ave]', work:'Roofing', sub:'Tue', days:'3', sort:'needs'},
-  {id:'elm', addr:'[Elm St]', work:'Siding', sub:'Tue', days:'3', sort:'human'},
-  {id:'pine', addr:'[Pine Way]', work:'Deck, 1 scope', sub:'Wed', days:'2', sort:'ready'},
-];
-const SORT = {ready:['st-ok','READY'], needs:['st-miss','NEEDS INFO'], human:['st-eye','HUMAN CHECK']};
-const REPORTS = {
-  laurel:[
-    ['Form complete, names match', 'Document AI + rules', 'OK','st-ok'],
-    ['Insurance certificate matches tax record', 'City licensing page, certificate of insurance', 'OK','st-ok'],
-    ['Contractor license active', 'City contractor license records', 'OK','st-ok'],
-    ['Sheets A-1, A-2, S-1 on file', 'Requirements Guideline [section]', 'OK','st-ok'],
-    ['Notes 3 and 5 for plan reviewer', 'W-3 size, new header size. Reviewer signs off.', 'REVIEWER','st-eye'],
-  ],
-  oak:[['Roof area missing from form','Requirements Guideline [section]','MISSING','st-miss'],['Agent drafted a request to the applicant','Waiting for staff to send','DRAFT','st-wait']],
-  elm:[['Parcel may be in a historic district','City map layers, edge of boundary','HUMAN EYES','st-eye']],
-  pine:[['1 scope, no plans, EZ Permit eligible','EZ Permits pilot rules','OK','st-ok'],['Contractor licensed and insured','City license records','OK','st-ok']],
-};
-function renderQueue(){
-  const rows = QUEUE.map(q => {
-    let [cls, tag] = SORT[q.sort];
-    if (q.id==='laurel' && state.issued){ cls='st-ok'; tag='ISSUED'; }
-    if (q.id==='laurel' && state.sentBack){ cls='st-miss'; tag='SENT BACK'; }
-    return `<div class="qrow ${state.queueSel===q.id?'sel':''}" data-q="${q.id}"><div class="ph" title="Placeholder address" style="border:none">${q.addr}</div><div>${q.work}</div><div class="mono" style="font-size:12px">${q.sub} <span style="color:var(--gray)">[sim]</span></div><div class="mono" style="font-size:12px">${q.days}</div><div><span class="pill ${cls}">${tag}</span></div></div>`;
-  }).join('');
-  $('#queue').innerHTML = `<div class="qhead"><div>Address</div><div>Work</div><div>Submitted</div><div>Days in queue</div><div>Agent sort</div></div>` + rows;
-  const q = QUEUE.find(x => x.id === state.queueSel);
-  $('#qrTitle').textContent = q.id==='laurel' ? "Laurel's file" : q.addr;
-  $('#qReport').innerHTML = REPORTS[q.id].map((r,i) =>
-    `<div class="nrow"><div class="num">${String(i+1).padStart(2,'0')}</div><div class="body"><span class="t">${r[0]}</span><span class="src">${r[1].replace('[section]','<span class="ph">[section]</span>')}</span></div><div class="tag ${r[3]}">${r[2]}</div></div>`).join('');
-  const isL = q.id === 'laurel';
-  $('#gateBody').style.opacity = isL ? 1 : .45;
-  $('#gateBody').style.pointerEvents = isL ? 'auto' : 'none';
-  $('#c3').checked = $('#c3').checked || false;
-  gateCheck();
-}
-$('#queue').addEventListener('click', e => {
-  const r = e.target.closest('[data-q]'); if(!r) return;
-  state.queueSel = r.dataset.q; renderQueue();
-});
-function gateCheck(){
-  const all = $('#c1').checked && $('#c2').checked && $('#c3').checked;
-  const b = $('#issueBtn');
-  b.disabled = !all || state.issued || state.sentBack;
-  $('#sendBackBtn').disabled = state.issued || state.sentBack;
-  if (state.issued) $('#gateHint').textContent = 'Issued by a person. The agent now handles the follow-up messages.';
-  else if (state.sentBack) $('#gateHint').textContent = 'Sent back by a person. The agent will explain what is needed to Laurel.';
-  else if (state.s1 !== 'received') $('#gateHint').innerHTML = 'S-1 not on file yet (see RC-2).';
-  else $('#gateHint').textContent = all ? 'All confirmed. Your call.' : 'The agent can\'t press this button.';
-}
-['c1','c2','c3'].forEach(id => $('#'+id).addEventListener('change', gateCheck));
-$('#issueBtn').addEventListener('click', () => {
-  state.issued = true;
-  $('#issuedBox').classList.add('on');
-  $$('#gateBody input').forEach(i => i.disabled = true);
-  send('Laurel + contractor', 'Text', 'Permit issued. Your contractor has the link to claim it.');
-  $('#queueStory').innerHTML = 'Issued by a person. Next: video check.';
-  renderQueue();
-});
-$('#sendBackBtn').addEventListener('click', () => {
-  state.sentBack = true;
-  send('Laurel', 'Email', 'Staff sent your file back. Here is what they need, in plain words: [staff comment]. Reply here and I\'ll check your fix before you resubmit.');
-  $('#queueStory').innerHTML = 'Sent back by a person. Press <b>Reset demo</b> to try the issue path.';
-  renderQueue();
-});
-
-/* ================= RC-4 VIDEO CHECK ================= */
-const SHOTS = [
-  {t:'Outside of W-3, whole frame in view', s:'Frame and trim visible on all four sides.', aim:'Point at the outside of window W-3.'},
-  {t:'Inside: sealant and trim', s:'Continuous bead, no gaps at the corners.', aim:'Now the inside edge, where the frame meets the wall.'},
-  {t:'Manufacturer label', s:'Label text must be readable.', aim:'Find the sticker on the glass or frame.'},
-  {t:'Opening width with a tape measure', s:'Tape across the clear opening.', aim:'Stretch a tape across the open sash.'},
-];
-function windowScene(){
-  return `<rect width="356" height="440" fill="#3B4552"/>
-  <rect x="0" y="330" width="356" height="110" fill="#2C333D"/>
-  <rect x="70" y="60" width="216" height="260" fill="#8FB0D3" stroke="#E9E4DA" stroke-width="12"/>
-  <rect x="82" y="72" width="192" height="236" fill="#A9C4E0"/>
-  <line x1="178" y1="66" x2="178" y2="314" stroke="#E9E4DA" stroke-width="8"/>
-  <line x1="76" y1="190" x2="280" y2="190" stroke="#E9E4DA" stroke-width="8"/>
-  <path d="M100 90 L150 80 L120 140 Z" fill="#fff" opacity=".18"/>`;
-}
-function label(x,y,w,txt,col){
-  return `<rect x="${x}" y="${y}" width="${w}" height="20" fill="${col}"/><text x="${x+5}" y="${y+15}" font-family="IBM Plex Mono, monospace" font-size="13" fill="#0B1626">${txt}</text>`;
-}
-function camSvg(){
-  const i = state.shot;
-  let body = '', msg = ['info', SHOTS[Math.min(i,3)].aim];
-  if (i >= 4){
-    body = windowScene() + `<rect width="356" height="440" fill="#0B1626" opacity=".55"/><text x="178" y="215" font-family="Barlow Condensed, sans-serif" font-size="34" font-weight="700" fill="#F3EFE6" text-anchor="middle">ALL 4 SHOTS READY</text><text x="178" y="245" font-family="IBM Plex Mono, monospace" font-size="13" fill="#8DB3E0" text-anchor="middle">checked before the inspector joins</text>`;
-    msg = ['ok','Done. Pick a time for the video inspection.'];
-  } else if (i === 0){
-    body = windowScene() + `<g class="bbox"><rect x="56" y="46" width="244" height="288" fill="none" stroke="#3FB673" stroke-width="3"/>${label(56,24,190,`window frame ${conf(.96)}`,'#3FB673')}</g>
-      <g class="bbox b2"><rect x="62" y="300" width="232" height="30" fill="none" stroke="#3FB673" stroke-width="2.5" stroke-dasharray="7 5"/>${label(62,334,150,`trim ${conf(.91)}`,'#3FB673')}</g>`;
-    msg = ['ok','Whole frame in view. Capture when ready.'];
-  } else if (i === 1){
-    body = `<rect width="356" height="440" fill="#D9D2C5"/><rect x="40" y="0" width="190" height="440" fill="#E9E4DA"/><rect x="60" y="0" width="150" height="440" fill="#A9C4E0"/>
-      <rect x="226" y="0" width="16" height="440" fill="#F5F2EC"/><rect x="242" y="0" width="114" height="440" fill="#CFC6B6"/>
-      <g class="bbox"><rect x="218" y="40" width="32" height="360" fill="none" stroke="#3FB673" stroke-width="3"/>${label(150,16,200,`sealant edge ${conf(.88)}`,'#3FB673')}</g>
-      <g class="bbox b2"><rect x="34" y="60" width="210" height="320" fill="none" stroke="#3FB673" stroke-width="2" stroke-dasharray="7 5"/>${label(34,384,120,`trim ${conf(.90)}`,'#3FB673')}</g>`;
-    msg = ['ok','Sealant bead continuous, no gaps found.'];
-  } else if (i === 2){
-    const z = state.closer;
-    const blur = z ? 0 : 2.2;
-    body = `<defs><filter id="bl"><feGaussianBlur stdDeviation="${blur}"/></filter></defs>
-      <g class="zoomable" style="transform-origin:236px 250px;transform:scale(${z?2.3:1})">${windowScene()}
-        <g filter="url(#bl)"><rect x="206" y="232" width="60" height="38" fill="#F7F5F0"/><rect x="210" y="236" width="52" height="6" fill="#13233A"/><text x="212" y="252" font-family="IBM Plex Mono, monospace" font-size="7" fill="#13233A">U-FACTOR 0.27</text><text x="212" y="262" font-family="IBM Plex Mono, monospace" font-size="7" fill="#13233A">SHGC 0.30</text></g>
-      </g>`;
-    if (!z){
-      body += `<g class="bbox"><rect x="198" y="224" width="76" height="54" fill="none" stroke="#F2B705" stroke-width="3"/>${label(150,282,170,`label · blurry ${conf(.42)}`,'#F2B705')}</g>
-        <g class="bbox b2"><rect x="56" y="46" width="244" height="288" fill="none" stroke="#3FB673" stroke-width="2" opacity=".7"/>${label(56,24,190,`window frame ${conf(.95)}`,'#3FB673')}</g>`;
-      msg = ['warn','Label found, text unreadable. Move closer.'];
-    } else {
-      body += `<g class="bbox"><rect x="158" y="198" width="156" height="108" fill="none" stroke="#3FB673" stroke-width="3"/>${label(140,176,190,`label · readable ${conf(.94)}`,'#3FB673')}</g>
-        <rect x="40" y="330" width="276" height="32" fill="#0B1626" opacity=".85"/><text x="50" y="351" font-family="IBM Plex Mono, monospace" font-size="12" fill="#F3EFE6">read: U-FACTOR 0.27 · SHGC 0.30 [sim]</text>`;
-      msg = ['ok','Label readable. Capture now.'];
-    }
-  } else if (i === 3){
-    body = windowScene() + `<rect x="84" y="196" width="188" height="14" fill="#F2B705"/><g font-family="IBM Plex Mono, monospace" font-size="8" fill="#0B1626">${Array.from({length:12},(_,k)=>`<line x1="${88+k*15}" y1="196" x2="${88+k*15}" y2="${k%2?203:206}" stroke="#0B1626"/>`).join('')}</g>
-      <g class="bbox"><rect x="78" y="188" width="200" height="30" fill="none" stroke="#3FB673" stroke-width="3"/>${label(78,166,170,`tape measure ${conf(.90)}`,'#3FB673')}</g>
-      <rect x="20" y="300" width="316" height="36" fill="#0B1626" opacity=".8"/><text x="30" y="323" font-family="IBM Plex Mono, monospace" font-size="13" fill="#F3EFE6">read: opening ≈ [24 in] wide [sim]</text>`;
-    msg = ['ok','Tape is readable. Capture when ready.'];
+/* ================= INSPECTOR ================= */
+function renderInsp(){
+  const s = state;
+  const others = [['9:00 AM','[Maple Rd]','Deck footing','4 of 4'],['11:30 AM','[Birch Ct]','Egress window','2 of 4']];
+  const mine = s.booked ? `<tr class="click" id="iRow"><td><b>${s.slot.replace(/^\w+ /,'')}</b></td><td><b>${PH('[1234 Example St]')}</b></td><td>Window W-3 enlarged</td><td><span class="pill ${s.insp==='pass'?'p-ok':s.insp?'p-miss':'p-ok'}">${s.insp==='pass'?'Passed':s.insp?'Failed':'4 of 4 pre-checked'}</span></td></tr>` : '';
+  $('#iBody').innerHTML = others.map(o => `<tr><td>${o[0]}</td><td>${PH(o[1])}</td><td>${o[2]}</td><td><span class="pill ${o[3]==='4 of 4'?'p-ok':'p-eye'}">${o[3]} shots</span></td></tr>`).join('') + mine;
+  $('#iCount').textContent = 2 + (s.booked ? 1 : 0);
+  if (!s.booked){
+    $('#iDetail').innerHTML = `<div class="note">ⓘ Laurel's inspection shows up here after she films her shots and books a time in the Applicant view.</div>`;
+    return;
   }
-  $('#camSvg').innerHTML = body;
-  const m = $('#camMsg'); m.className = 'cam-msg ' + msg[0]; m.textContent = msg[1];
-}
-function conf(base){ return (base + (Math.random()-.5)*0.02).toFixed(2); }
-function videoUI(){
-  const i = state.shot;
-  $('#shotLbl').textContent = i >= 4 ? 'DONE' : `SHOT ${i+1} OF 4`;
-  $('#vCount').textContent = i >= 4 ? '4 of 4 checked' : `shot ${i+1} of 4`;
-  $$('#vProg i').forEach((el,k) => { el.className = state.shots[k] ? 'done' : (k===i ? 'cur' : ''); });
-  const cap = $('#captureBtn'), cl = $('#closerBtn');
-  cl.style.display = (i===2 && !state.closer) ? '' : 'none';
-  cap.disabled = i >= 4 || (i===2 && !state.closer);
-  cap.textContent = i >= 4 ? 'All shots captured' : 'Capture shot';
-  $('#shotNotes').innerHTML = SHOTS.map((s,k) => {
-    let tag='—', cls='st-wait';
-    if (state.shots[k]){ tag='OK'; cls='st-ok'; }
-    else if (k===i){ tag = (k===2 && !state.closer) ? 'RE-FILM' : 'NOW'; cls = (k===2 && !state.closer) ? 'st-eye' : 'st-miss'; }
-    return `<div class="nrow"><div class="num">${String(k+1).padStart(2,'0')}</div><div class="body"><span class="t">${s.t}</span><span class="s">${s.s}</span></div><div class="tag ${cls}">${tag}</div></div>`;
-  }).join('');
-  $('#bookPanel').style.display = i >= 4 ? '' : 'none';
-  $('#inspPanel').style.display = state.booked ? '' : 'none';
-  camSvg();
-}
-let camTimer = setInterval(() => { if (current==='video' && state.shot < 4) camSvg(); }, 900);
-$('#captureBtn').addEventListener('click', () => {
-  if (state.shot >= 4) return;
-  state.shots[state.shot] = true;
-  state.shot++;
-  if (state.shot === 4){
-    send('Laurel', 'App', 'All 4 shots look good. Pick an inspection time.', 'toast4');
-    $('#videoStory').innerHTML = 'Pick a slot and book it.';
-  }
-  videoUI();
-});
-$('#closerBtn').addEventListener('click', () => {
-  state.closer = true; videoUI();
-});
-const SLOTS = ['Mon 10:00 AM','Mon 1:30 PM','Tue 9:00 AM','Tue 3:00 PM'];
-$('#slots').innerHTML = SLOTS.map(s => `<button class="slot" data-slot="${s}">${s}<span class="mono">virtual · 20 min [sim]</span></button>`).join('');
-$('#slots').addEventListener('click', e => {
-  const b = e.target.closest('[data-slot]'); if(!b || state.booked) return;
-  state.slot = b.dataset.slot;
-  $$('.slot').forEach(x => x.classList.toggle('sel', x === b));
-  $('#bookBtn').disabled = false;
-});
-$('#bookBtn').addEventListener('click', () => {
-  if (!state.slot) return;
-  state.booked = true; $('#bookBtn').disabled = true; $('#bookBtn').textContent = `Booked: ${state.slot} ✓`;
-  $('#inspSlot').textContent = state.slot + ' [sim]';
-  send('Laurel', 'Text', `Booked: video inspection ${state.slot}. I'll remind you the night before. Keep the tape measure handy.`, 'toast4');
-  send('Inspector', 'Calendar', `New virtual inspection ${state.slot}: [1234 Example St], windows. All 4 shots pre-checked, footage attached.`);
-  $('#videoStory').innerHTML = 'Booked. The inspector decides: <b>Pass</b> or <b>Fail</b>.';
-  videoUI();
-});
-function inspect(result){
-  if (state.insp) return;
-  state.insp = result;
-  $('#passBtn').disabled = $('#failBtn').disabled = true;
-  $('#inspResult').innerHTML = result==='pass' ? '<span class="st-ok">PASSED by inspector (human). Agent starts close-out.</span>' : '<span class="st-miss">FAILED by inspector (human). Agent explains the fix list to Laurel.</span>';
-  send('Laurel', 'Email', result==='pass' ? 'Passed! Upload 1 close-out document to finish and I\'ll close your permit.' : 'The inspector found something to fix. Here is their note in plain words: [inspector note]. I\'ll help you book a re-check.');
-  $('#videoStory').innerHTML = 'Done. See all messages on RC-5.';
-}
-$('#passBtn').addEventListener('click', () => inspect('pass'));
-$('#failBtn').addEventListener('click', () => inspect('fail'));
-
-/* ================= RC-5 MESSAGES ================= */
-const TRIGGERS = {
-  applicant:[
-    {id:'a1', when:'Draft has 1 gap', ch:'App', to:'Laurel', say:'Your insurance name doesn\'t match your tax document. Fix it before you submit.'},
-    {id:'a2', when:'Reviewer posts comments', ch:'Email', to:'Laurel', say:'2 comments on your plans. Here\'s your to-do list: 1) add W-3 size, 2) add header size.'},
-    {id:'a3', when:'Permit issued', ch:'Text', to:'Contractor', say:'Permit issued for [1234 Example St]. Here\'s the link to claim it.'},
-    {id:'a4', when:'Day before inspection, 6 PM', ch:'Text', to:'Laurel', say:'Tomorrow 10 AM. Film these 4 shots tonight, I\'ll check them.'},
-    {id:'a5', when:'Inspection passed', ch:'Email', to:'Laurel', say:'Passed! Upload 1 close-out document to finish.'},
-  ],
-  staff:[
-    {id:'b1', when:'Every morning, 8 AM', ch:'Digest', to:'Technician', say:'3 files ready to issue, 1 needs a human check.'},
-    {id:'b2', when:'Review near deadline', ch:'Dashboard', to:'Supervisor', say:'2 reviews are at day 25 of the 30-day target.'},
-    {id:'b3', when:'Insurance expires mid-job', ch:'Dashboard', to:'Licensing', say:'Contractor coverage ends before the permit does.'},
-    {id:'b4', when:'Video check failed twice', ch:'Dashboard', to:'Inspector', say:'Homeowner stuck on shot 3. Suggest a quick call.'},
-    {id:'b5', when:'Close-out stalled', ch:'Digest', to:'Supervisor', say:'4 permits waiting on close-out documents.'},
-  ],
-};
-function renderTriggers(){
-  for (const [key, el] of [['applicant','#trigApplicant'],['staff','#trigStaff']]){
-    $(el).innerHTML = TRIGGERS[key].map((t,i) => `<div class="trig ${state.fired[t.id]?'sent':''}"><div class="num">${String(i+1).padStart(2,'0')}</div><div class="body"><span class="when">⚡ ${t.when}</span><span class="say">"${t.say}"</span><span class="ch">→ ${t.to.toUpperCase()} · ${t.ch.toUpperCase()}</span></div><div class="fire"><button class="btn small" data-fire="${t.id}" ${state.fired[t.id]?'disabled':''}>${state.fired[t.id]?'Sent':'Fire'}</button></div></div>`).join('');
-  }
+  const shots = SHOTS.map((x,i) => `<div class="shot"><svg viewBox="0 30 356 300" preserveAspectRatio="xMidYMid slice">${shotSvg(i, true)[0]}</svg><div><span class="pill p-ok">✓ AI check</span><div style="margin-top:4px">${x.t}</div></div></div>`).join('');
+  $('#iDetail').innerHTML = `
+    <div class="card">
+      <div class="card-h"><h3>${PH('[1234 Example St]')} · ${s.slot}</h3><span class="muted small">Laurel ${PH('[Lastname]')}</span></div>
+      <div class="card-b"><div class="shots">${shots}</div></div>
+    </div>
+    <div class="cols" style="grid-template-columns:1fr 340px">
+      <div class="card">
+        <div class="card-h"><h3>Agent draft notes</h3><span class="pill p-eye">Draft</span></div>
+        <div class="rowi"><span class="ic ok">✓</span><div><div class="t">New unit in the enlarged opening</div><div class="src">Shot 1 · frame detected</div></div><span></span></div>
+        <div class="rowi"><span class="ic ok">✓</span><div><div class="t">Sealant continuous, no gaps</div><div class="src">Shot 2</div></div><span></span></div>
+        <div class="rowi"><span class="ic ok">✓</span><div><div class="t">Label read: U-factor 0.27, SHGC 0.30</div><div class="src">Shot 3 · re-filmed closer</div></div><span></span></div>
+        <div class="rowi"><span class="ic eye">?</span><div><div class="t">Opening about ${PH('[24 in]')} wide. Check egress size on the call.</div><div class="src">Shot 4 · measured by vision, needs a person</div></div><span></span></div>
+      </div>
+      <div class="card">
+        <div class="card-h"><h3>Your decision</h3><span class="pill p-info">Person only</span></div>
+        <div class="card-b" style="display:flex;flex-direction:column;gap:10px">
+          ${s.insp ? `<div class="result ${s.insp==='pass'?'ok':'miss'}">${s.insp==='pass'?'Passed':'Failed'}</div><p class="small muted">Decided by ${PH('[R. Inspector]')}. The agent tells Laurel what's next.</p>`
+            : `<p class="small muted">The agent drafts notes. You decide.</p><button class="btn primary block" id="passBtn">Pass</button><button class="btn block" id="failBtn">Fail</button>`}
+        </div>
+      </div>
+    </div>`;
 }
 document.addEventListener('click', e => {
-  const b = e.target.closest('[data-fire]'); if(!b) return;
-  const t = [...TRIGGERS.applicant, ...TRIGGERS.staff].find(x => x.id === b.dataset.fire);
-  state.fired[t.id] = true;
-  send(t.to, t.ch, t.say);
-  renderTriggers();
+  const b = e.target.closest('#passBtn, #failBtn'); if (!b || state.insp) return;
+  state.insp = b.id === 'passBtn' ? 'pass' : 'fail';
+  send('app','City of Pittsburgh','Email', state.insp==='pass' ? 'Passed! Upload 1 close-out document to finish.' : 'The inspector found something to fix: [inspector note]. I\'ll help you book a re-check.');
+  renderAll();
 });
-function renderLog(){
-  $('#logCount').textContent = `${state.log.length} sent`;
-  $('#log').innerHTML = state.log.length
-    ? [...state.log].reverse().map(m => `<div class="logrow"><div class="mono">${m.time}</div><div><b>${m.to}</b><br><span class="mono">${m.channel}</span></div><div>${m.text}</div></div>`).join('')
-    : '<div class="empty">No messages yet. Walk through RC-1 to RC-4, or fire a trigger above.</div>';
-}
 
-/* ================= Init / reset ================= */
-function init(){
-  // RC-1
-  $('#pcChecks').innerHTML = ''; $('#pcResult').innerHTML = '';
-  const pb = $('#pcBtn'); pb.disabled = false; pb.textContent = 'Check my application';
-  $('#pcStep').textContent = 'STEP 1 OF 2';
-  $('#pcStory').innerHTML = 'Press <b>Check my application</b>.';
-  pcNotes();
-  // RC-2
-  $('#planDetail').innerHTML = '<span class="lbl">Finding detail</span><p>Tap a pin or a row to see why the agent flagged it and who it goes to.</p>';
-  $('#planStatus').textContent = 'Waiting on the technician.';
-  $('#planStory').innerHTML = 'Tap pin 4, then <b>Request S-1</b>.';
-  renderPins(); renderPlanNotes(); planButtons();
-  // RC-3
-  $$('#gateBody input').forEach(i => { i.checked = false; i.disabled = false; });
-  $('#issuedBox').classList.remove('on');
-  $('#queueStory').innerHTML = 'Tick all three, then <b>Issue permit</b>.';
-  renderQueue();
-  // RC-4
-  $('#bookBtn').disabled = true; $('#bookBtn').textContent = 'Book this slot';
-  $$('.slot').forEach(x => x.classList.remove('sel'));
-  $('#passBtn').disabled = $('#failBtn').disabled = false; $('#inspResult').textContent = '';
-  $('#videoStory').innerHTML = 'Capture each shot. Shot 3 is blurry: <b>Move closer</b>.';
-  videoUI();
-  // RC-5
-  renderTriggers(); renderLog();
-}
-$('#resetBtn').addEventListener('click', () => { state = freshState(); init(); go('precheck'); });
-
-init();
-let start = 'precheck';
-try { const s = localStorage.getItem('rc-sheet'); if (SHEETS.some(x => x.id === s)) start = s; } catch(e){}
-go(start);
+/* ================= Init ================= */
+function renderAll(){ phone(); renderApp(); renderCity(); renderInsp(); renderMsgs(); renderGuide(); }
+$('#resetBtn').addEventListener('click', () => {
+  state = fresh(); $$('#gate input').forEach(i => i.checked = false); renderAll(); show('app');
+});
+renderAll();
+let start = 'app';
+try { const v = localStorage.getItem('rc-view'); if (['app','city','insp'].includes(v)) start = v; } catch(e){}
+show(start);
 })();
 </script>
 </body>
