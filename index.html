@@ -1,0 +1,1013 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ready-Check Agent Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#13233A; --ink:#0B1626; --cream:#F3EFE6; --paper:#FBF9F4; --white:#FFFFFF;
+  --orange:#E8590C; --orange-dk:#B5400A; --orange-lt:#FDEBDF;
+  --yellow:#F2B705; --yellow-lt:#FFF4CC;
+  --green:#2E7D4F; --green-lt:#3FB673; --green-bg:#EAF3EC;
+  --blue:#1E4C86; --blue-grid:#2A5C9A; --line-lt:#EAF1FB; --sky:#8DB3E0;
+  --gray:#4B4F55; --rule:#D9D4CA;
+  --cond:'Barlow Condensed', 'Arial Narrow', Arial, sans-serif;
+  --sans:'Barlow', Arial, sans-serif;
+  --mono:'IBM Plex Mono', 'Courier New', monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--cream);color:var(--navy);font-family:var(--sans);font-size:16px;line-height:1.4}
+button{font:inherit;cursor:pointer;border:none;background:none;color:inherit}
+button:disabled{cursor:not-allowed}
+.mono{font-family:var(--mono)}
+.cond{font-family:var(--cond);text-transform:uppercase;font-weight:700;letter-spacing:.2px}
+.ph{border-bottom:1.5px dotted var(--orange-dk);cursor:help}
+.ph::after{content:"";}
+
+/* ---------- Title block header ---------- */
+header.tb{display:grid;grid-template-columns:auto 1fr auto;border-bottom:2px solid var(--navy);background:var(--paper)}
+.tb-cell{padding:10px 18px;border-right:1px solid var(--navy);display:flex;flex-direction:column;justify-content:center}
+.tb-cell:last-child{border-right:none}
+.tb-label{font-family:var(--mono);font-size:11px;letter-spacing:1px;color:var(--gray);text-transform:uppercase}
+.tb-title{font-family:var(--cond);font-weight:700;font-size:26px;text-transform:uppercase;line-height:1}
+.tb-sim{font-family:var(--mono);font-size:12px;color:var(--orange-dk);font-weight:500}
+nav.sheets{display:flex;align-items:stretch;overflow-x:auto}
+nav.sheets button{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:8px 16px;border-right:1px solid var(--rule);min-width:150px;text-align:left;position:relative}
+nav.sheets button .n{font-family:var(--mono);font-size:11px;color:var(--gray)}
+nav.sheets button .t{font-family:var(--cond);font-weight:600;font-size:18px;text-transform:uppercase;line-height:1.05}
+nav.sheets button .who{font-family:var(--mono);font-size:11px;color:var(--gray)}
+nav.sheets button[aria-current="true"]{background:var(--navy);color:var(--cream)}
+nav.sheets button[aria-current="true"] .n, nav.sheets button[aria-current="true"] .who{color:var(--sky)}
+nav.sheets button .badge{position:absolute;top:6px;right:8px;font-family:var(--mono);font-size:11px;background:var(--orange);color:var(--navy);padding:0 5px;font-weight:500}
+.tb-actions{display:flex;gap:8px;align-items:center}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 16px;font-weight:600;font-size:15px;border:2px solid var(--navy);background:var(--paper);color:var(--navy);border-radius:4px;transition:background .15s, opacity .15s}
+.btn:hover:not(:disabled){background:var(--cream)}
+.btn.primary{background:var(--navy);color:var(--cream)}
+.btn.primary:hover:not(:disabled){background:#1d3352}
+.btn.orange{background:var(--orange);border-color:var(--orange);color:var(--navy)}
+.btn.orange:hover:not(:disabled){background:#f06a20}
+.btn.small{padding:6px 10px;font-size:13px}
+.btn:disabled{opacity:.38}
+.btn.ghost{border-color:transparent;text-decoration:underline;padding:6px 8px}
+
+main{max-width:1440px;margin:0 auto;padding:24px 24px 40px}
+.sheet{display:none}
+.sheet.on{display:block;animation:fadein .25s ease}
+@keyframes fadein{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.sheet-head{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;margin-bottom:18px;flex-wrap:wrap}
+.kicker{font-family:var(--mono);font-size:13px;letter-spacing:1.5px;color:var(--orange-dk);font-weight:500;text-transform:uppercase}
+h1.sheet-title{font-family:var(--cond);font-weight:700;font-size:44px;line-height:1;text-transform:uppercase}
+.lede{font-size:17px;color:var(--gray);max-width:640px;margin-top:6px}
+.legend{display:flex;gap:16px;flex-wrap:wrap}
+.legend span{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:12px;color:var(--gray)}
+.legend i{display:inline-block;width:14px;height:14px}
+
+/* ---------- Drawing-style notes rows ---------- */
+.notes{border-top:2px solid var(--navy);border-bottom:2px solid var(--navy);background:var(--paper)}
+.notes-head{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-bottom:1px solid var(--navy)}
+.notes-head .cond{font-size:20px}
+.notes-head .mono{font-size:12px;color:var(--gray)}
+.nrow{display:grid;grid-template-columns:44px 1fr auto;gap:0;border-bottom:1px solid var(--rule);align-items:stretch}
+.nrow:last-child{border-bottom:none}
+.nrow > .num{font-family:var(--mono);font-size:13px;font-weight:500;padding:10px 0 10px 12px;color:var(--orange-dk)}
+.nrow > .body{padding:9px 12px;display:flex;flex-direction:column;gap:2px;border-left:1px solid var(--rule)}
+.nrow .t{font-weight:600;font-size:15px;line-height:1.25}
+.nrow .s{font-size:13px;color:var(--gray);line-height:1.3}
+.nrow .src{font-family:var(--mono);font-size:11.5px;color:var(--gray)}
+.nrow > .tag{padding:9px 12px;border-left:1px solid var(--rule);display:flex;align-items:center;font-family:var(--mono);font-size:12px;font-weight:500;white-space:nowrap}
+.nrow.clickable{cursor:pointer}
+.nrow.clickable:hover{background:var(--cream)}
+.nrow.sel{background:var(--yellow-lt)}
+.st-ok{color:var(--green)} .st-miss{color:var(--orange-dk)} .st-eye{color:#8a6a00} .st-wait{color:var(--gray)}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:middle}
+
+/* ---------- Layout helpers ---------- */
+.grid2{display:grid;grid-template-columns:400px 1fr;gap:32px;align-items:start}
+.grid-plan{display:grid;grid-template-columns:1fr 420px;gap:0;border:2px solid var(--navy);background:var(--paper)}
+.stack{display:flex;flex-direction:column;gap:16px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.storyline{margin-top:22px;display:grid;grid-template-columns:auto 1fr auto;border-top:1px solid var(--navy);border-bottom:1px solid var(--navy);align-items:center}
+.storyline .lbl{font-family:var(--mono);font-size:12px;padding:10px 14px;border-right:1px solid var(--navy);color:var(--gray)}
+.storyline .txt{padding:10px 14px;font-size:15px}
+.storyline .go{padding:6px 10px}
+
+/* ---------- Phone ---------- */
+.phone{width:380px;height:760px;background:var(--ink);border-radius:46px;padding:12px;box-shadow:0 18px 40px rgba(11,22,38,.18);position:relative;flex-shrink:0}
+.screen{width:100%;height:100%;background:#F7F5F0;border-radius:36px;overflow:hidden;display:flex;flex-direction:column;position:relative}
+.statusbar{display:flex;justify-content:space-between;padding:12px 26px 4px;font-family:var(--mono);font-size:12px;background:var(--navy);color:var(--cream)}
+.apphead{background:var(--navy);color:var(--cream);padding:6px 20px 12px;display:flex;justify-content:space-between;align-items:flex-end}
+.apphead .cond{font-size:24px}
+.apphead .mono{font-size:12px;color:var(--yellow)}
+.appbody{flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.appfoot{padding:12px 16px 18px;border-top:1px solid var(--rule);background:#F7F5F0}
+.appfoot .btn{width:100%}
+.q{font-family:var(--cond);font-weight:700;font-size:30px;text-transform:uppercase;line-height:1}
+.summary{border-top:1px solid var(--navy);border-bottom:1px solid var(--navy)}
+.summary div{display:grid;grid-template-columns:96px 1fr;font-size:13.5px;border-bottom:1px solid var(--rule);padding:6px 0}
+.summary div:last-child{border-bottom:none}
+.summary b{font-family:var(--mono);font-weight:500;font-size:11px;color:var(--gray);text-transform:uppercase;padding-top:2px}
+.chk{display:grid;grid-template-columns:28px 1fr;gap:6px;padding:8px 0;border-bottom:1px solid var(--rule);font-size:14px;opacity:0;transform:translateY(4px);transition:opacity .3s, transform .3s}
+.chk.show{opacity:1;transform:none}
+.chk .ic{font-weight:700;font-size:18px;line-height:1.1;text-align:center}
+.chk .t{font-weight:600;line-height:1.25}
+.chk .s{font-size:12.5px;color:var(--gray);line-height:1.3}
+.chk.fix{background:var(--orange-lt);padding:8px 8px;border:1.5px solid var(--orange);border-radius:6px}
+.result{font-family:var(--cond);font-weight:700;font-size:22px;text-transform:uppercase;padding:6px 0}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--rule);border-top-color:var(--orange);border-radius:50%;animation:spin .8s linear infinite;vertical-align:-2px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.toast{position:absolute;left:14px;right:14px;top:44px;background:rgba(19,35,58,.97);color:var(--cream);border-radius:14px;padding:10px 12px;font-size:13px;z-index:5;transform:translateY(calc(-100% - 70px));transition:transform .35s ease;box-shadow:0 8px 20px rgba(0,0,0,.25)}
+.toast.on{transform:none}
+.toast .from{font-family:var(--mono);font-size:11px;color:var(--yellow);margin-bottom:2px}
+
+/* ---------- Blueprint ---------- */
+.plan-wrap{background:var(--blue);display:flex;flex-direction:column}
+.plan-bar{display:flex;justify-content:space-between;align-items:center;background:var(--navy);color:var(--cream);padding:10px 16px}
+.plan-bar .cond{font-size:20px}
+.plan-bar .mono{font-size:12px;color:var(--yellow)}
+.plan-wrap svg{width:100%;height:auto;display:block}
+.pin{cursor:pointer}
+.pin circle{transition:r .15s}
+.pin:hover circle, .pin.sel circle{r:24}
+.pin.sel circle{stroke:var(--cream);stroke-width:4}
+.findings{display:flex;flex-direction:column;border-left:2px solid var(--navy)}
+.findings .notes{border-top:none;flex:1}
+.detail{border-top:2px solid var(--navy);padding:12px 14px;display:flex;flex-direction:column;gap:6px;min-height:150px;background:var(--white)}
+.detail .lbl{font-family:var(--mono);font-size:11px;color:var(--gray);text-transform:uppercase;letter-spacing:1px}
+.detail p{font-size:14px;line-height:1.35}
+.actions{display:flex;gap:10px;padding:12px 14px;border-top:2px solid var(--navy);background:var(--paper)}
+.actions .btn{flex:1}
+.status-line{font-family:var(--mono);font-size:12px;padding:8px 14px;border-top:1px solid var(--rule);color:var(--gray);min-height:34px}
+
+/* ---------- Queue ---------- */
+.queue{border:2px solid var(--navy);background:var(--paper)}
+.qhead,.qrow{display:grid;grid-template-columns:1.4fr 1.2fr 1fr 1fr 150px;align-items:center}
+.qhead{background:var(--navy);color:var(--cream);font-family:var(--mono);font-size:11px;letter-spacing:1px;text-transform:uppercase}
+.qhead div,.qrow div{padding:10px 14px}
+.qrow{border-bottom:1px solid var(--rule);font-size:14.5px;cursor:pointer}
+.qrow:hover{background:var(--cream)}
+.qrow.sel{background:var(--yellow-lt)}
+.qrow:last-child{border-bottom:none}
+.pill{font-family:var(--mono);font-size:11.5px;font-weight:500;padding:3px 8px;border:1.5px solid currentColor;display:inline-block;letter-spacing:.5px}
+.queue-grid{display:grid;grid-template-columns:1fr 440px;gap:24px;align-items:start}
+.gate{border:2px solid var(--navy);background:var(--white)}
+.gate-head{background:var(--navy);color:var(--cream);padding:10px 14px;display:flex;justify-content:space-between;align-items:center}
+.gate-head .cond{font-size:20px}
+.gate-head .mono{font-size:11px;color:var(--yellow)}
+.gate-body{padding:14px;display:flex;flex-direction:column;gap:10px}
+.confirm{display:grid;grid-template-columns:22px 1fr;gap:8px;font-size:14px;align-items:start;padding:8px 0;border-bottom:1px solid var(--rule);cursor:pointer}
+.confirm input{width:18px;height:18px;margin-top:1px;accent-color:var(--navy)}
+.human-only{display:flex;justify-content:space-between;align-items:center;font-family:var(--mono);font-size:12px;border-top:1px solid var(--navy);border-bottom:1px solid var(--navy);padding:8px 0}
+.agent-cant{font-size:13px;color:var(--gray);font-style:italic}
+.issued{border-top:2px solid var(--green);border-bottom:2px solid var(--green);padding:10px 0;display:none}
+.issued.on{display:block}
+.issued .cond{font-size:22px;color:var(--green)}
+
+/* ---------- Video ---------- */
+.video-grid{display:grid;grid-template-columns:400px 1fr;gap:32px;align-items:start}
+.cam{flex:1;background:#1B2430;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.cam svg{width:100%;height:100%;display:block}
+.cam .rec{position:absolute;top:10px;left:12px;font-family:var(--mono);font-size:11px;color:#ff6b5b;display:flex;align-items:center;gap:6px}
+.cam .rec i{width:8px;height:8px;border-radius:50%;background:#ff6b5b;animation:blink 1.2s infinite}
+@keyframes blink{50%{opacity:.2}}
+.cam .shotlbl{position:absolute;top:10px;right:12px;font-family:var(--mono);font-size:11px;color:var(--cream)}
+.cam-msg{position:absolute;left:12px;right:12px;bottom:12px;padding:8px 10px;font-size:13.5px;font-weight:600;border-radius:8px;line-height:1.25}
+.cam-msg.warn{background:var(--orange-lt);color:var(--navy);border:2px solid var(--orange)}
+.cam-msg.ok{background:#E6F5EC;color:var(--navy);border:2px solid var(--green-lt)}
+.cam-msg.info{background:rgba(247,245,240,.94);color:var(--navy);border:2px solid var(--sky)}
+.progress{display:flex;gap:6px}
+.progress i{flex:1;height:8px;background:var(--rule)}
+.progress i.done{background:var(--green)}
+.progress i.cur{background:var(--orange)}
+.bbox{animation:jitter 1.6s ease-in-out infinite}
+.bbox.b2{animation-duration:1.9s;animation-delay:-.4s}
+.bbox.b3{animation-duration:2.2s;animation-delay:-.9s}
+@keyframes jitter{0%,100%{transform:translate(0,0)}25%{transform:translate(1.5px,-1px)}50%{transform:translate(-1px,1.5px)}75%{transform:translate(1px,1px)}}
+.zoomable{transition:transform .9s cubic-bezier(.3,.7,.2,1)}
+.slots{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.slot{border:1.5px solid var(--navy);padding:8px;font-size:13px;text-align:left;border-radius:4px;background:var(--white)}
+.slot.sel{background:var(--navy);color:var(--cream)}
+.slot .mono{font-size:11px;display:block;opacity:.75}
+
+/* ---------- Messages ---------- */
+.msg-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start}
+.trig{display:grid;grid-template-columns:44px 1fr auto;border-bottom:1px solid var(--rule);align-items:stretch}
+.trig:last-child{border-bottom:none}
+.trig .num{font-family:var(--mono);font-size:13px;padding:10px 0 10px 12px;color:var(--orange-dk);font-weight:500}
+.trig .body{padding:9px 12px;border-left:1px solid var(--rule);display:flex;flex-direction:column;gap:3px}
+.trig .when{font-family:var(--mono);font-size:11.5px;color:var(--gray)}
+.trig .say{font-size:14.5px;line-height:1.3}
+.trig .ch{font-family:var(--mono);font-size:11px;color:var(--orange-dk)}
+.trig .fire{padding:9px 12px;border-left:1px solid var(--rule);display:flex;align-items:center}
+.trig.sent{background:var(--green-bg)}
+.log{border-top:2px solid var(--navy);border-bottom:2px solid var(--navy);background:var(--white);max-height:520px;overflow:auto}
+.logrow{display:grid;grid-template-columns:120px 130px 1fr;border-bottom:1px solid var(--rule);font-size:13.5px}
+.logrow div{padding:8px 10px}
+.logrow div + div{border-left:1px solid var(--rule)}
+.logrow .mono{font-size:11.5px;color:var(--gray)}
+.empty{padding:16px;color:var(--gray);font-size:14px;font-style:italic}
+.limits{display:grid;grid-template-columns:auto 1fr 1fr 1fr;border-top:2px solid var(--navy);border-bottom:2px solid var(--navy);margin-top:24px;background:var(--paper)}
+.limits > div{padding:12px 14px;display:flex;gap:10px;align-items:baseline}
+.limits > div + div{border-left:1px solid var(--navy)}
+.limits .mono{font-size:12px;font-weight:500;color:var(--orange-dk)}
+.limits b{font-weight:600;font-size:15px}
+
+footer.foot{max-width:1440px;margin:0 auto;padding:0 24px 28px;display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;font-family:var(--mono);font-size:12px;color:var(--gray)}
+
+@media (max-width:1100px){
+  .grid2,.video-grid,.queue-grid,.msg-grid{grid-template-columns:1fr}
+  .grid-plan{grid-template-columns:1fr}
+  .findings{border-left:none;border-top:2px solid var(--navy)}
+  .phone{margin:0 auto}
+  header.tb{grid-template-columns:1fr}
+  .tb-cell{border-right:none;border-bottom:1px solid var(--navy)}
+  .limits{grid-template-columns:1fr}
+  .limits > div + div{border-left:none;border-top:1px solid var(--navy)}
+}
+@media (max-width:520px){
+  main{padding:16px}
+  .phone{width:100%;max-width:380px}
+  .qhead,.qrow{grid-template-columns:1.2fr 1fr 120px}
+  .qhead div:nth-child(3),.qhead div:nth-child(4),.qrow div:nth-child(3),.qrow div:nth-child(4){display:none}
+  h1.sheet-title{font-size:34px}
+}
+</style>
+</head>
+<body>
+
+<header class="tb">
+  <div class="tb-cell">
+    <span class="tb-label">Project · City of Pittsburgh Permits, Licenses, and Inspections</span>
+    <span class="tb-title">Ready-Check agent</span>
+    <span class="tb-sim">PROTOTYPE · SIMULATED DATA · NOT A CITY SYSTEM</span>
+  </div>
+  <nav class="sheets" id="nav" aria-label="Prototype screens"></nav>
+  <div class="tb-cell tb-actions">
+    <button class="btn small" id="resetBtn" title="Start the story over">Reset demo</button>
+  </div>
+</header>
+
+<main>
+
+<!-- ============ RC-1 PRE-CHECK ============ -->
+<section class="sheet" id="s-precheck">
+  <div class="sheet-head">
+    <div>
+      <div class="kicker">Checkpoint 1 · before she applies</div>
+      <h1 class="sheet-title">Is my application ready?</h1>
+      <p class="lede">Laurel is replacing 4 windows. The agent checks her file before she submits.</p>
+    </div>
+    <div class="legend">
+      <span><i style="background:var(--green-lt)"></i>ok</span>
+      <span><i style="background:var(--orange)"></i>fix before submit</span>
+      <span><i style="background:var(--yellow)"></i>info</span>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="phone">
+      <div class="screen">
+        <div class="toast" id="toast1"><div class="from">READY-CHECK AGENT</div><div class="tx"></div></div>
+        <div class="statusbar"><span>9:41</span><span>LTE ▮▮▮</span></div>
+        <div class="apphead"><span class="cond">Ready-Check</span><span class="mono" id="pcStep">STEP 1 OF 2</span></div>
+        <div class="appbody" id="pcBody">
+          <div class="q">Is my application ready?</div>
+          <div class="summary">
+            <div><b>Applicant</b><span>Laurel <span class="ph" title="Placeholder name">[Lastname]</span></span></div>
+            <div><b>Address</b><span><span class="ph" title="Placeholder address">[1234 Example St]</span>, Pittsburgh</span></div>
+            <div><b>Work</b><span>Replace 4 windows. Enlarge bedroom window W-3.</span></div>
+            <div><b>Contractor</b><span class="ph" title="Placeholder company">[Three Rivers Window Co.]</span></div>
+            <div><b>Uploads</b><span>Application form · Drawings A-1, A-2 · Insurance certificate</span></div>
+          </div>
+          <div id="pcChecks"></div>
+          <div id="pcResult"></div>
+        </div>
+        <div class="appfoot"><button class="btn orange" id="pcBtn">Check my application</button></div>
+      </div>
+    </div>
+
+    <div class="stack">
+      <div class="notes">
+        <div class="notes-head"><span class="cond">What the agent checks</span><span class="mono">6 checks · rules + document AI</span></div>
+        <div id="pcNotes"></div>
+      </div>
+      <div class="notes">
+        <div class="notes-head"><span class="cond">Guardrails</span><span class="mono"></span></div>
+        <div class="nrow"><div class="num">01</div><div class="body"><span class="t">Never submits or approves</span></div><div class="tag"></div></div>
+        <div class="nrow"><div class="num">02</div><div class="body"><span class="t">Unsure? Hands it to a person</span></div><div class="tag"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="storyline"><span class="lbl">STORY</span><span class="txt" id="pcStory">Press <b>Check my application</b>.</span><span class="go"><button class="btn small" data-goto="plan">Next: plan read →</button></span></div>
+</section>
+
+<!-- ============ RC-2 PLAN READ ============ -->
+<section class="sheet" id="s-plan">
+  <div class="sheet-head">
+    <div>
+      <div class="kicker">After submit · application technician view</div>
+      <h1 class="sheet-title">The agent reads the drawings first</h1>
+      <p class="lede">Agent pins findings on sheet A-1. Missing items go to the technician, code questions to the reviewer.</p>
+    </div>
+    <div class="legend">
+      <span><i style="background:var(--green-lt)"></i>ok</span>
+      <span><i style="background:var(--orange)"></i>missing</span>
+      <span><i style="background:var(--yellow)"></i>human eyes</span>
+    </div>
+  </div>
+
+  <div class="grid-plan">
+    <div class="plan-wrap">
+      <div class="plan-bar"><span class="cond">Plan intake · window alteration</span><span class="mono">Sheet A-1 · tap a pin</span></div>
+      <svg id="planSvg" viewBox="0 0 1040 620" role="img" aria-label="Floor plan sheet A-1 with five numbered agent pins">
+        <defs><pattern id="bp" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M20 0 H0 V20" fill="none" stroke="#2A5C9A" stroke-width="1"/></pattern></defs>
+        <rect width="1040" height="620" fill="#1E4C86"/><rect width="1040" height="620" fill="url(#bp)"/>
+        <!-- walls -->
+        <rect x="60" y="60" width="600" height="420" fill="none" stroke="#EAF1FB" stroke-width="8"/>
+        <line x1="340" y1="60" x2="340" y2="300" stroke="#EAF1FB" stroke-width="6"/>
+        <line x1="60" y1="300" x2="660" y2="300" stroke="#EAF1FB" stroke-width="6"/>
+        <line x1="500" y1="300" x2="500" y2="480" stroke="#EAF1FB" stroke-width="6"/>
+        <line x1="200" y1="300" x2="200" y2="480" stroke="#EAF1FB" stroke-width="6"/>
+        <!-- door swing -->
+        <path d="M340 150 A50 50 0 0 1 390 200" fill="none" stroke="#EAF1FB" stroke-width="2"/><line x1="340" y1="200" x2="390" y2="200" stroke="#EAF1FB" stroke-width="2"/>
+        <!-- windows W-1, W-2 (top), W-3 (right, enlarged), W-4 (bottom) -->
+        <g stroke="#EAF1FB"><rect x="140" y="52" width="110" height="16" fill="#1E4C86" stroke-width="3"/><line x1="140" y1="60" x2="250" y2="60" stroke-width="2"/></g>
+        <g stroke="#EAF1FB"><rect x="420" y="52" width="110" height="16" fill="#1E4C86" stroke-width="3"/><line x1="420" y1="60" x2="530" y2="60" stroke-width="2"/></g>
+        <g stroke="#F2B705"><rect x="652" y="120" width="16" height="150" fill="#1E4C86" stroke-width="3" stroke-dasharray="10 6"/><line x1="660" y1="120" x2="660" y2="270" stroke-width="2"/></g>
+        <g stroke="#EAF1FB"><rect x="300" y="472" width="110" height="16" fill="#1E4C86" stroke-width="3"/><line x1="300" y1="480" x2="410" y2="480" stroke-width="2"/></g>
+        <!-- header line over W-3 -->
+        <line x1="676" y1="110" x2="676" y2="280" stroke="#F2B705" stroke-width="3"/>
+        <text x="690" y="200" font-family="IBM Plex Mono, monospace" font-size="13" fill="#F2B705" transform="rotate(90 690 200)" text-anchor="middle">NEW HEADER</text>
+        <!-- stair -->
+        <g stroke="#EAF1FB" stroke-width="2"><line x1="520" y1="320" x2="640" y2="320"/><line x1="520" y1="345" x2="640" y2="345"/><line x1="520" y1="370" x2="640" y2="370"/><line x1="520" y1="395" x2="640" y2="395"/><line x1="520" y1="420" x2="640" y2="420"/><line x1="520" y1="445" x2="640" y2="445"/></g>
+        <!-- room labels -->
+        <g font-family="IBM Plex Mono, monospace" font-weight="500" fill="#EAF1FB" text-anchor="middle" font-size="20">
+          <text x="200" y="190">KITCHEN</text><text x="500" y="200">BEDROOM 2</text><text x="130" y="400">BATH</text><text x="350" y="400">LIVING</text>
+        </g>
+        <text x="580" y="470" font-family="IBM Plex Mono, monospace" font-size="16" fill="#EAF1FB" text-anchor="middle">STAIR</text>
+        <g font-family="IBM Plex Mono, monospace" font-size="15" fill="#EAF1FB" text-anchor="middle">
+          <text x="195" y="45">W-1  30x48</text><text x="475" y="45">W-2  30x48</text><text x="355" y="510">W-4  30x48</text>
+        </g>
+        <text x="640" y="105" font-family="IBM Plex Mono, monospace" font-size="15" fill="#F2B705" text-anchor="end">W-3  ? x ?</text>
+        <!-- dimension -->
+        <line x1="60" y1="550" x2="660" y2="550" stroke="#EAF1FB" stroke-width="2"/><line x1="60" y1="540" x2="60" y2="560" stroke="#EAF1FB" stroke-width="2"/><line x1="660" y1="540" x2="660" y2="560" stroke="#EAF1FB" stroke-width="2"/>
+        <text x="360" y="578" font-family="IBM Plex Mono, monospace" font-size="16" fill="#EAF1FB" text-anchor="middle">24'-0"</text>
+        <!-- title block -->
+        <rect x="760" y="400" width="250" height="180" fill="none" stroke="#EAF1FB" stroke-width="3"/>
+        <line x1="760" y1="450" x2="1010" y2="450" stroke="#EAF1FB" stroke-width="2"/><line x1="760" y1="500" x2="1010" y2="500" stroke="#EAF1FB" stroke-width="2"/><line x1="885" y1="500" x2="885" y2="580" stroke="#EAF1FB" stroke-width="2"/>
+        <g font-family="IBM Plex Mono, monospace" fill="#EAF1FB">
+          <text x="772" y="432" font-size="15">OWNER: LAUREL [—]</text>
+          <text x="772" y="482" font-size="14">[1234 EXAMPLE ST] PGH</text>
+          <text x="772" y="525" font-size="12">SHEET</text><text x="772" y="555" font-size="18" font-weight="500">A-1 of 3</text>
+          <text x="897" y="525" font-size="12">SCALE</text><text x="897" y="555" font-size="15">1/4in=1ft</text>
+        </g>
+        <!-- sheet index -->
+        <rect x="760" y="60" width="250" height="140" fill="none" stroke="#EAF1FB" stroke-width="2" stroke-dasharray="8 6"/>
+        <g font-family="IBM Plex Mono, monospace" font-size="14" fill="#EAF1FB">
+          <text x="775" y="92" font-weight="500">SHEET INDEX</text>
+          <text x="775" y="122">A-1  FLOOR PLAN</text><text x="775" y="148">A-2  ELEVATIONS</text><text x="775" y="174">S-1  SITE PLAN</text>
+        </g>
+        <!-- pins -->
+        <g id="pins"></g>
+      </svg>
+    </div>
+    <div class="findings">
+      <div class="notes">
+        <div class="notes-head"><span class="cond">Agent findings · 5</span><span class="mono">sheet A-1</span></div>
+        <div id="planNotes"></div>
+      </div>
+      <div class="detail" id="planDetail">
+        <span class="lbl">Finding detail</span>
+        <p>Tap a pin or a row to see why the agent flagged it and who it goes to.</p>
+      </div>
+      <div class="actions">
+        <button class="btn primary" id="reqS1">Request S-1</button>
+        <button class="btn" id="acceptPlan">Accept</button>
+      </div>
+      <div class="status-line mono" id="planStatus">Waiting on the technician.</div>
+    </div>
+  </div>
+
+  <div class="storyline"><span class="lbl">STORY</span><span class="txt" id="planStory">Tap pin 4, then <b>Request S-1</b>.</span><span class="go"><button class="btn small" data-goto="queue">Next: staff queue →</button></span></div>
+</section>
+
+<!-- ============ RC-3 STAFF QUEUE ============ -->
+<section class="sheet" id="s-queue">
+  <div class="sheet-head">
+    <div>
+      <div class="kicker">City staff · issue stage</div>
+      <h1 class="sheet-title">Only a person can issue the permit</h1>
+      <p class="lede">The agent sorts and reports. It has no issue button.</p>
+    </div>
+  </div>
+
+  <div class="queue-grid">
+    <div class="stack">
+      <div class="queue" id="queue">
+        <div class="qhead"><div>Address</div><div>Work</div><div>Submitted</div><div>Days in queue</div><div>Agent sort</div></div>
+      </div>
+      <div class="notes">
+        <div class="notes-head"><span class="cond">Agent report · <span id="qrTitle">Laurel's file</span></span><span class="mono" id="qrSub">every check links to its rule</span></div>
+        <div id="qReport"></div>
+      </div>
+    </div>
+
+    <div class="gate">
+      <div class="gate-head"><span class="cond">Issue decision</span><span class="mono">HUMAN ONLY</span></div>
+      <div class="gate-body" id="gateBody">
+        <div class="human-only"><span>Signed in: <span class="ph" title="Placeholder staff name">[J. Technician]</span></span><span>Application Technician</span></div>
+        <label class="confirm"><input type="checkbox" id="c1"><span>I read the agent report and the sources it cites.</span></label>
+        <label class="confirm"><input type="checkbox" id="c2"><span>Plan reviewer notes 3 and 5 are signed off. <span class="mono" style="font-size:11px;color:var(--gray)">(simulated sign-off)</span></span></label>
+        <label class="confirm"><input type="checkbox" id="c3"><span>Site plan S-1 is on file.</span></label>
+        <p class="agent-cant" id="gateHint">The agent can't press this button.</p>
+        <button class="btn primary" id="issueBtn" disabled>Issue permit</button>
+        <button class="btn" id="sendBackBtn">Send back to applicant</button>
+        <div class="issued" id="issuedBox">
+          <div class="cond">Permit issued</div>
+          <div class="mono" style="font-size:12px">Permit no. <span class="ph" title="Placeholder permit number">[BP-2026-XXXXX]</span> · issued by <span class="ph">[J. Technician]</span> (human)</div>
+          <div style="font-size:13.5px;margin-top:6px">Agent notifies Laurel and her contractor.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="storyline"><span class="lbl">STORY</span><span class="txt" id="queueStory">Tick all three, then <b>Issue permit</b>.</span><span class="go"><button class="btn small" data-goto="video">Next: video check →</button></span></div>
+</section>
+
+<!-- ============ RC-4 VIDEO CHECK ============ -->
+<section class="sheet" id="s-video">
+  <div class="sheet-head">
+    <div>
+      <div class="kicker">Checkpoint 2 · before the inspector calls</div>
+      <h1 class="sheet-title">Is my site ready?</h1>
+      <p class="lede">Computer vision checks each shot before the inspector joins.</p>
+    </div>
+    <div class="legend">
+      <span><i style="background:var(--green-lt)"></i>detected</span>
+      <span><i style="background:var(--yellow)"></i>needs a better shot</span>
+    </div>
+  </div>
+
+  <div class="video-grid">
+    <div class="phone">
+      <div class="screen">
+        <div class="toast" id="toast4"><div class="from">READY-CHECK AGENT</div><div class="tx"></div></div>
+        <div class="statusbar"><span>7:12 PM</span><span>LTE ▮▮▮</span></div>
+        <div class="apphead"><span class="cond">Ready-Check</span><span class="mono" id="vStep">STEP 2 OF 2</span></div>
+        <div class="cam" id="cam">
+          <div class="rec"><i></i>LIVE</div>
+          <div class="shotlbl" id="shotLbl">SHOT 1 OF 4</div>
+          <svg id="camSvg" viewBox="0 0 356 440" preserveAspectRatio="xMidYMid slice"></svg>
+          <div class="cam-msg info" id="camMsg">Point at the outside of window W-3.</div>
+        </div>
+        <div class="appfoot" style="display:flex;flex-direction:column;gap:10px">
+          <div class="row" style="justify-content:space-between"><span class="mono" style="font-size:11px;color:var(--gray)">AI VISION · <span id="vCount">shot 1 of 4</span></span></div>
+          <div class="progress" id="vProg"><i></i><i></i><i></i><i></i></div>
+          <div class="row" style="flex-wrap:nowrap"><button class="btn" id="closerBtn" style="flex:1;display:none">Move closer</button><button class="btn orange" id="captureBtn" style="flex:1">Capture shot</button></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="stack">
+      <div class="notes">
+        <div class="notes-head"><span class="cond">Shot list · window W-3</span><span class="mono"><span class="ph" title="Confirm the real checklist with the city">[placeholder list]</span></span></div>
+        <div id="shotNotes"></div>
+      </div>
+
+      <div class="notes" id="bookPanel" style="display:none">
+        <div class="notes-head"><span class="cond">Book the video inspection</span><span class="mono">virtual slots · simulated</span></div>
+        <div style="padding:12px" class="stack">
+          <div class="slots" id="slots"></div>
+          <button class="btn primary" id="bookBtn" disabled>Book this slot</button>
+        </div>
+      </div>
+
+      <div class="gate" id="inspPanel" style="display:none">
+        <div class="gate-head"><span class="cond">Inspector · video call</span><span class="mono">HUMAN ONLY</span></div>
+        <div class="gate-body">
+          <div class="human-only"><span>Inspector: <span class="ph">[R. Inspector]</span></span><span id="inspSlot"></span></div>
+          <div class="notes" style="border-top:1px solid var(--navy);border-bottom:1px solid var(--navy)">
+            <div class="nrow"><div class="num">01</div><div class="body"><span class="t">All 4 shots on file before the call</span><span class="src">Agent · computer vision</span></div><div class="tag st-ok">READY</div></div>
+            <div class="nrow"><div class="num">02</div><div class="body"><span class="t">Draft notes from the call</span><span class="s">"New unit installed in enlarged opening W-3, sealant continuous, label readable." <span class="ph">[simulated speech-to-text]</span></span></div><div class="tag st-eye">DRAFT</div></div>
+          </div>
+          <p class="agent-cant">Agent drafts notes. Inspector decides.</p>
+          <div class="row"><button class="btn primary" id="passBtn" style="flex:1">Pass</button><button class="btn" id="failBtn" style="flex:1">Fail</button></div>
+          <div class="mono" style="font-size:12px" id="inspResult"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="storyline"><span class="lbl">STORY</span><span class="txt" id="videoStory">Capture each shot. Shot 3 is blurry: <b>Move closer</b>.</span><span class="go"><button class="btn small" data-goto="msgs">Next: agent messages →</button></span></div>
+</section>
+
+<!-- ============ RC-5 MESSAGES ============ -->
+<section class="sheet" id="s-msgs">
+  <div class="sheet-head">
+    <div>
+      <div class="kicker">Proactive · the agent reaches out first</div>
+      <h1 class="sheet-title">Agent messages</h1>
+      <p class="lede">Events and schedules trigger messages. Fire one to try it.</p>
+    </div>
+  </div>
+
+  <div class="msg-grid">
+    <div class="notes">
+      <div class="notes-head"><span class="cond">To Laurel and her contractor</span><span class="mono">app · text · email</span></div>
+      <div id="trigApplicant"></div>
+    </div>
+    <div class="notes">
+      <div class="notes-head"><span class="cond">To city staff</span><span class="mono">dashboard · digest</span></div>
+      <div id="trigStaff"></div>
+    </div>
+  </div>
+
+  <div class="limits">
+    <div><span class="cond" style="font-size:18px">Limits</span></div>
+    <div><span class="mono">01</span><b>Can remind, explain and draft</b></div>
+    <div><span class="mono">02</span><b>Never submits, pays or decides</b></div>
+    <div><span class="mono">03</span><b>Max 1 nudge a day, quiet hours <span class="ph" title="Design choice, not a city rule">[design choice]</span></b></div>
+  </div>
+
+  <div style="margin-top:24px">
+    <div class="notes-head" style="border-top:2px solid var(--navy);background:var(--paper)"><span class="cond">Message log</span><span class="mono" id="logCount">0 sent</span></div>
+    <div class="log" id="log"></div>
+  </div>
+</section>
+
+</main>
+
+<footer class="foot">
+  <span>All names, addresses, scores, dates and permit numbers are simulated. <span class="ph">[Dotted]</span> = placeholder.</span>
+  <span>← → keys move between screens</span>
+</footer>
+
+<script>
+(() => {
+const $ = (s, r=document) => r.querySelector(s);
+const $$ = (s, r=document) => [...r.querySelectorAll(s)];
+const wait = ms => new Promise(r => setTimeout(r, ms));
+
+/* ---------------- Screens ---------------- */
+const SHEETS = [
+  {id:'precheck', n:'RC-1', t:'Pre-check',      who:'Laurel · applicant'},
+  {id:'plan',     n:'RC-2', t:'Plan read',      who:'Application technician'},
+  {id:'queue',    n:'RC-3', t:'Staff queue',    who:'City staff'},
+  {id:'video',    n:'RC-4', t:'Video check',    who:'Laurel → inspector'},
+  {id:'msgs',     n:'RC-5', t:'Agent messages', who:'Everyone'},
+];
+let current = 'precheck';
+function renderNav(){
+  $('#nav').innerHTML = SHEETS.map(s =>
+    `<button data-sheet="${s.id}" aria-current="${s.id===current}"><span class="n">${s.n}</span><span class="t">${s.t}</span><span class="who">${s.who}</span>${s.id==='msgs' && state.log.length ? `<span class="badge">${state.log.length}</span>`:''}</button>`).join('');
+}
+function go(id){
+  current = id;
+  $$('.sheet').forEach(el => el.classList.toggle('on', el.id === 's-'+id));
+  renderNav();
+  window.scrollTo({top:0, behavior:'smooth'});
+  try { localStorage.setItem('rc-sheet', id); } catch(e){}
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-sheet],[data-goto]');
+  if (b) go(b.dataset.sheet || b.dataset.goto);
+});
+document.addEventListener('keydown', e => {
+  if (e.target.matches('input,textarea')) return;
+  const i = SHEETS.findIndex(s => s.id === current);
+  if (e.key === 'ArrowRight' && i < SHEETS.length-1) go(SHEETS[i+1].id);
+  if (e.key === 'ArrowLeft' && i > 0) go(SHEETS[i-1].id);
+});
+
+/* ---------------- State ---------------- */
+let state;
+function freshState(){
+  return {
+    pc:'idle',            // idle | running | issue | fixing | ready | submitted
+    planSel:null, s1:'missing', planAccepted:false,
+    queueSel:'laurel', issued:false, sentBack:false,
+    shot:0, closer:false, shots:[false,false,false,false], slot:null, booked:false, insp:null,
+    log:[], fired:{},
+  };
+}
+state = freshState();
+
+/* simulated clock */
+const CLOCK = ['Mon 9:12 AM','Mon 9:14 AM','Mon 2:40 PM','Tue 8:00 AM','Tue 10:05 AM','Wed 11:30 AM','Thu 4:15 PM','Fri 7:12 PM','Fri 7:20 PM','Mon 10:00 AM','Mon 10:25 AM','Mon 10:40 AM'];
+function stamp(){ return CLOCK[Math.min(state.log.length, CLOCK.length-1)] + ' [sim]'; }
+
+function send(to, channel, text, toastId){
+  state.log.push({time:stamp(), to, channel, text});
+  renderLog(); renderNav();
+  if (toastId) toast(toastId, text);
+}
+function toast(id, text){
+  const t = $('#'+id); if(!t) return;
+  $('.tx', t).textContent = text;
+  t.classList.add('on');
+  clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('on'), 3600);
+}
+
+/* ================= RC-1 PRE-CHECK ================= */
+const PC_CHECKS = [
+  {k:'type', ic:'i', cls:'st-eye', t:'Standard permit, not EZ', s:'W-3 is enlarged, so drawings are needed.', src:'Rule: Standard Permit Application Requirements Guideline <span class="ph">[section]</span>', tag:'INFO'},
+  {k:'parcel', ic:'✓', cls:'st-ok', t:'Not historic, floodplain or condemned', s:'Parcel checked against city map layers.', src:'Source: city map layers <span class="ph">[simulated lookup]</span>', tag:'OK'},
+  {k:'lic', ic:'✓', cls:'st-ok', t:'Contractor license active', s:'Expires in 212 days <span class="ph">[sim]</span>.', src:'Source: city contractor license records', tag:'OK'},
+  {k:'draw', ic:'✓', cls:'st-ok', t:'Drawings uploaded and readable', s:'A-1, A-2.', src:'Model: document AI', tag:'OK'},
+  {k:'form', ic:'✓', cls:'st-ok', t:'Form complete', s:'Names and address match.', src:'Model: document AI + rules', tag:'OK'},
+  {k:'ins', ic:'!', cls:'st-miss', t:'Insurance name doesn\'t match', s:'"Windows LLC" vs tax record "Window Co LLC".', src:'Rule: city licensing page, certificate of insurance (named insured must match)', tag:'FIX', fix:true},
+];
+function pcNotes(){
+  $('#pcNotes').innerHTML = PC_CHECKS.map((c,i) => {
+    let tag = '—', cls='st-wait';
+    if (state.pc !== 'idle' && state.pc !== 'running'){ tag = c.tag; cls = c.cls; }
+    if (c.fix && (state.pc==='ready' || state.pc==='submitted')){ tag='FIXED'; cls='st-ok'; }
+    return `<div class="nrow"><div class="num">${String(i+1).padStart(2,'0')}</div><div class="body"><span class="t">${c.t}</span><span class="src">${c.src}</span></div><div class="tag ${cls}">${tag}</div></div>`;
+  }).join('');
+}
+async function runPrecheck(recheck=false){
+  state.pc = 'running';
+  const btn = $('#pcBtn'); btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Checking…';
+  $('#pcResult').innerHTML = '';
+  const box = $('#pcChecks'); box.innerHTML = '';
+  pcNotes();
+  for (const c of PC_CHECKS){
+    const fixed = recheck && c.fix;
+    const el = document.createElement('div');
+    el.className = 'chk' + (c.fix && !fixed ? ' fix' : '');
+    el.innerHTML = `<div class="ic ${fixed?'st-ok':c.cls}">${fixed?'✓':c.ic}</div><div><div class="t">${fixed?'Insurance name matches':c.t}</div><div class="s">${fixed?'New certificate: "Three Rivers Window Co LLC".':c.s}</div></div>`;
+    box.appendChild(el);
+    await wait(recheck ? 140 : 380);
+    el.classList.add('show');
+  }
+  await wait(250);
+  btn.disabled = false;
+  if (!recheck){
+    state.pc = 'issue';
+    $('#pcResult').innerHTML = `<div class="result st-miss">1 item to fix</div><div style="font-size:13px;color:var(--gray)">Ask your contractor for a corrected certificate.</div>`;
+    btn.textContent = 'Upload corrected certificate';
+    $('#pcStory').innerHTML = '<b>1 item to fix.</b> Upload the corrected certificate.';
+  } else {
+    state.pc = 'ready';
+    $('#pcResult').innerHTML = `<div class="result st-ok">Ready to submit</div><div style="font-size:13px;color:var(--gray)">Ready means complete. City staff still review and decide.</div>`;
+    btn.textContent = 'Submit application';
+    $('#pcStory').innerHTML = 'All clear. Laurel submits herself.';
+  }
+  pcNotes();
+}
+$('#pcBtn').addEventListener('click', async () => {
+  if (state.pc === 'idle') return runPrecheck(false);
+  if (state.pc === 'issue'){
+    state.pc = 'fixing';
+    const btn = $('#pcBtn'); btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Uploading certificate.pdf…';
+    await wait(900);
+    return runPrecheck(true);
+  }
+  if (state.pc === 'ready'){
+    state.pc = 'submitted';
+    const btn = $('#pcBtn'); btn.disabled = true; btn.textContent = 'Submitted ✓';
+    $('#pcStep').textContent = 'SUBMITTED';
+    $('#pcResult').innerHTML = `<div class="result st-ok">Submitted</div><div style="font-size:13px;color:var(--gray)">Application no. <span class="ph">[APP-2026-XXXX]</span>. Standard review is 15 to 30 business days.</div>`;
+    send('Laurel', 'App', 'Submitted, complete on the first try. I\'ll ping you when a reviewer comments.', 'toast1');
+    $('#pcStory').innerHTML = 'Submitted. Next: city side.';
+    pcNotes();
+  }
+});
+
+/* ================= RC-2 PLAN READ ================= */
+const PINS = [
+  {id:1, x:1010, y:400, c:'#3FB673', st:'ok',   t:'Title block matches the application', model:'Document AI', to:'TECH', why:'Owner name and address on the title block match the form Laurel submitted.', rule:'Standard Permit Application Requirements Guideline <span class="ph">[section]</span>'},
+  {id:2, x:1010, y:580, c:'#3FB673', st:'ok',   t:'Scale found, plan is measurable', model:'Vision language model', to:'TECH', why:'Scale 1/4in = 1ft read from the title block and checked against the 24\'-0" dimension.', rule:'Drawing standards <span class="ph">[section]</span>'},
+  {id:3, x:720, y:170, c:'#F2B705', st:'eye',  t:'W-3 enlarged opening has no size', model:'Vision language model', conf:0.71, to:'REVIEWER', why:'W-1, W-2 and W-4 show 30x48. W-3 is marked but has no width or height. Bedroom windows matter for the emergency escape opening rule.', rule:'Residential code, emergency escape openings <span class="ph">[section]</span>'},
+  {id:4, x:1010, y:174, c:'#E8590C', st:'miss', t:'S-1 site plan listed but not uploaded', model:'Document AI + rules', to:'TECH', why:'The sheet index lists S-1 SITE PLAN. Only A-1 and A-2 were uploaded.', rule:'Standard Permit Application Requirements Guideline <span class="ph">[section]</span>'},
+  {id:5, x:676, y:290, c:'#F2B705', st:'eye',  t:'New header over W-3: size not shown', model:'Vision language model', conf:0.58, to:'REVIEWER', why:'A new header is drawn over the wider opening but has no member size. The agent can\'t tell if it is adequate, so a person decides.', rule:'Structural, reviewer judgment. Never cleared by the agent.'},
+];
+const ST_TAG = {ok:['st-ok','OK'], miss:['st-miss','MISSING'], eye:['st-eye','HUMAN EYES']};
+function renderPins(){
+  $('#pins').innerHTML = PINS.map(p => {
+    let col = p.c;
+    if (p.id===4 && state.s1==='received') col = '#3FB673';
+    return `<g class="pin ${state.planSel===p.id?'sel':''}" data-pin="${p.id}" tabindex="0" role="button" aria-label="Finding ${p.id}"><circle cx="${p.x}" cy="${p.y}" r="20" fill="${col}" stroke="#13233A" stroke-width="3"/><text x="${p.x}" y="${p.y+8}" font-family="Barlow Condensed, sans-serif" font-size="24" font-weight="700" fill="#13233A" text-anchor="middle" pointer-events="none">${p.id}</text></g>`;
+  }).join('');
+}
+function renderPlanNotes(){
+  $('#planNotes').innerHTML = PINS.map(p => {
+    let [cls, tag] = ST_TAG[p.st];
+    if (p.id===4 && state.s1==='requested'){ cls='st-wait'; tag='REQUESTED'; }
+    if (p.id===4 && state.s1==='received'){ cls='st-ok'; tag='RECEIVED'; }
+    const conf = p.conf ? ` ${p.conf.toFixed(2)}` : '';
+    return `<div class="nrow clickable ${state.planSel===p.id?'sel':''}" data-pinrow="${p.id}"><div class="num">${String(p.id).padStart(2,'0')}</div><div class="body"><span class="t">${p.t}</span><span class="src">${p.model.toUpperCase()}${conf} · TO ${p.to}</span></div><div class="tag ${cls}">${tag}</div></div>`;
+  }).join('');
+}
+function selectPin(id){
+  state.planSel = id;
+  const p = PINS.find(x => x.id === id);
+  $('#planDetail').innerHTML = `<span class="lbl">Finding ${String(id).padStart(2,'0')} · goes to ${p.to==='TECH'?'application technician':'plan reviewer (as a note)'}</span>
+    <p><b>${p.t}.</b> ${p.why}</p>
+    <p class="mono" style="font-size:11.5px;color:var(--gray)">${p.model}${p.conf?` · confidence ${p.conf.toFixed(2)} <span class="ph">[sim]</span> · below 0.80 routes to a person`:''}</p>
+    <p class="mono" style="font-size:11.5px;color:var(--gray)">${p.rule}</p>`;
+  renderPins(); renderPlanNotes();
+}
+document.addEventListener('click', e => {
+  const pin = e.target.closest('[data-pin]'); if (pin) return selectPin(+pin.dataset.pin);
+  const row = e.target.closest('[data-pinrow]'); if (row) return selectPin(+row.dataset.pinrow);
+});
+document.addEventListener('keydown', e => {
+  const pin = e.target.closest && e.target.closest('[data-pin]');
+  if (pin && (e.key==='Enter' || e.key===' ')){ e.preventDefault(); selectPin(+pin.dataset.pin); }
+});
+function planButtons(){
+  const r = $('#reqS1'), a = $('#acceptPlan');
+  r.disabled = state.s1 !== 'missing' || state.planAccepted;
+  r.textContent = state.s1==='missing' ? 'Request S-1' : state.s1==='requested' ? 'S-1 requested' : 'S-1 received ✓';
+  a.disabled = state.planAccepted;
+  a.textContent = state.planAccepted ? 'Accepted ✓' : 'Accept';
+  a.classList.toggle('primary', state.s1==='received' && !state.planAccepted);
+}
+$('#reqS1').addEventListener('click', async () => {
+  selectPin(4);
+  state.s1 = 'requested'; planButtons(); renderPlanNotes();
+  $('#planStatus').textContent = 'Technician sent the agent\'s drafted request to Laurel.';
+  send('Laurel', 'Email', 'Please upload sheet S-1 (site plan). It\'s listed on your drawings but missing.');
+  $('#planStory').innerHTML = 'Request sent. Laurel uploads S-1 <span class="ph">[simulated]</span>…';
+  await wait(2000);
+  state.s1 = 'received'; planButtons(); renderPins(); renderPlanNotes();
+  $('#planStatus').textContent = 'S-1 received. Agent re-read the sheet index: all 3 sheets on file.';
+  send('Technician', 'Dashboard', 'S-1 received. All 3 sheets on file.');
+  $('#planStory').innerHTML = 'S-1 arrived. Press <b>Accept</b>.';
+});
+$('#acceptPlan').addEventListener('click', () => {
+  state.planAccepted = true; planButtons();
+  $('#planStatus').textContent = state.s1==='received'
+    ? 'Accepted by technician. Notes 3 and 5 sent to plan reviewer.'
+    : 'Accepted by technician with S-1 still missing (technician\'s call).';
+  $('#planStory').innerHTML = 'Accepted. Next: staff queue.';
+  renderQueue();
+});
+
+/* ================= RC-3 STAFF QUEUE ================= */
+const QUEUE = [
+  {id:'laurel', addr:'[1234 Example St]', work:'Windows (W-3 enlarged)', sub:'Mon', days:'4', sort:'ready'},
+  {id:'oak', addr:'[Oak Ave]', work:'Roofing', sub:'Tue', days:'3', sort:'needs'},
+  {id:'elm', addr:'[Elm St]', work:'Siding', sub:'Tue', days:'3', sort:'human'},
+  {id:'pine', addr:'[Pine Way]', work:'Deck, 1 scope', sub:'Wed', days:'2', sort:'ready'},
+];
+const SORT = {ready:['st-ok','READY'], needs:['st-miss','NEEDS INFO'], human:['st-eye','HUMAN CHECK']};
+const REPORTS = {
+  laurel:[
+    ['Form complete, names match', 'Document AI + rules', 'OK','st-ok'],
+    ['Insurance certificate matches tax record', 'City licensing page, certificate of insurance', 'OK','st-ok'],
+    ['Contractor license active', 'City contractor license records', 'OK','st-ok'],
+    ['Sheets A-1, A-2, S-1 on file', 'Requirements Guideline [section]', 'OK','st-ok'],
+    ['Notes 3 and 5 for plan reviewer', 'W-3 size, new header size. Reviewer signs off.', 'REVIEWER','st-eye'],
+  ],
+  oak:[['Roof area missing from form','Requirements Guideline [section]','MISSING','st-miss'],['Agent drafted a request to the applicant','Waiting for staff to send','DRAFT','st-wait']],
+  elm:[['Parcel may be in a historic district','City map layers, edge of boundary','HUMAN EYES','st-eye']],
+  pine:[['1 scope, no plans, EZ Permit eligible','EZ Permits pilot rules','OK','st-ok'],['Contractor licensed and insured','City license records','OK','st-ok']],
+};
+function renderQueue(){
+  const rows = QUEUE.map(q => {
+    let [cls, tag] = SORT[q.sort];
+    if (q.id==='laurel' && state.issued){ cls='st-ok'; tag='ISSUED'; }
+    if (q.id==='laurel' && state.sentBack){ cls='st-miss'; tag='SENT BACK'; }
+    return `<div class="qrow ${state.queueSel===q.id?'sel':''}" data-q="${q.id}"><div class="ph" title="Placeholder address" style="border:none">${q.addr}</div><div>${q.work}</div><div class="mono" style="font-size:12px">${q.sub} <span style="color:var(--gray)">[sim]</span></div><div class="mono" style="font-size:12px">${q.days}</div><div><span class="pill ${cls}">${tag}</span></div></div>`;
+  }).join('');
+  $('#queue').innerHTML = `<div class="qhead"><div>Address</div><div>Work</div><div>Submitted</div><div>Days in queue</div><div>Agent sort</div></div>` + rows;
+  const q = QUEUE.find(x => x.id === state.queueSel);
+  $('#qrTitle').textContent = q.id==='laurel' ? "Laurel's file" : q.addr;
+  $('#qReport').innerHTML = REPORTS[q.id].map((r,i) =>
+    `<div class="nrow"><div class="num">${String(i+1).padStart(2,'0')}</div><div class="body"><span class="t">${r[0]}</span><span class="src">${r[1].replace('[section]','<span class="ph">[section]</span>')}</span></div><div class="tag ${r[3]}">${r[2]}</div></div>`).join('');
+  const isL = q.id === 'laurel';
+  $('#gateBody').style.opacity = isL ? 1 : .45;
+  $('#gateBody').style.pointerEvents = isL ? 'auto' : 'none';
+  $('#c3').checked = $('#c3').checked || false;
+  gateCheck();
+}
+$('#queue').addEventListener('click', e => {
+  const r = e.target.closest('[data-q]'); if(!r) return;
+  state.queueSel = r.dataset.q; renderQueue();
+});
+function gateCheck(){
+  const all = $('#c1').checked && $('#c2').checked && $('#c3').checked;
+  const b = $('#issueBtn');
+  b.disabled = !all || state.issued || state.sentBack;
+  $('#sendBackBtn').disabled = state.issued || state.sentBack;
+  if (state.issued) $('#gateHint').textContent = 'Issued by a person. The agent now handles the follow-up messages.';
+  else if (state.sentBack) $('#gateHint').textContent = 'Sent back by a person. The agent will explain what is needed to Laurel.';
+  else if (state.s1 !== 'received') $('#gateHint').innerHTML = 'S-1 not on file yet (see RC-2).';
+  else $('#gateHint').textContent = all ? 'All confirmed. Your call.' : 'The agent can\'t press this button.';
+}
+['c1','c2','c3'].forEach(id => $('#'+id).addEventListener('change', gateCheck));
+$('#issueBtn').addEventListener('click', () => {
+  state.issued = true;
+  $('#issuedBox').classList.add('on');
+  $$('#gateBody input').forEach(i => i.disabled = true);
+  send('Laurel + contractor', 'Text', 'Permit issued. Your contractor has the link to claim it.');
+  $('#queueStory').innerHTML = 'Issued by a person. Next: video check.';
+  renderQueue();
+});
+$('#sendBackBtn').addEventListener('click', () => {
+  state.sentBack = true;
+  send('Laurel', 'Email', 'Staff sent your file back. Here is what they need, in plain words: [staff comment]. Reply here and I\'ll check your fix before you resubmit.');
+  $('#queueStory').innerHTML = 'Sent back by a person. Press <b>Reset demo</b> to try the issue path.';
+  renderQueue();
+});
+
+/* ================= RC-4 VIDEO CHECK ================= */
+const SHOTS = [
+  {t:'Outside of W-3, whole frame in view', s:'Frame and trim visible on all four sides.', aim:'Point at the outside of window W-3.'},
+  {t:'Inside: sealant and trim', s:'Continuous bead, no gaps at the corners.', aim:'Now the inside edge, where the frame meets the wall.'},
+  {t:'Manufacturer label', s:'Label text must be readable.', aim:'Find the sticker on the glass or frame.'},
+  {t:'Opening width with a tape measure', s:'Tape across the clear opening.', aim:'Stretch a tape across the open sash.'},
+];
+function windowScene(){
+  return `<rect width="356" height="440" fill="#3B4552"/>
+  <rect x="0" y="330" width="356" height="110" fill="#2C333D"/>
+  <rect x="70" y="60" width="216" height="260" fill="#8FB0D3" stroke="#E9E4DA" stroke-width="12"/>
+  <rect x="82" y="72" width="192" height="236" fill="#A9C4E0"/>
+  <line x1="178" y1="66" x2="178" y2="314" stroke="#E9E4DA" stroke-width="8"/>
+  <line x1="76" y1="190" x2="280" y2="190" stroke="#E9E4DA" stroke-width="8"/>
+  <path d="M100 90 L150 80 L120 140 Z" fill="#fff" opacity=".18"/>`;
+}
+function label(x,y,w,txt,col){
+  return `<rect x="${x}" y="${y}" width="${w}" height="20" fill="${col}"/><text x="${x+5}" y="${y+15}" font-family="IBM Plex Mono, monospace" font-size="13" fill="#0B1626">${txt}</text>`;
+}
+function camSvg(){
+  const i = state.shot;
+  let body = '', msg = ['info', SHOTS[Math.min(i,3)].aim];
+  if (i >= 4){
+    body = windowScene() + `<rect width="356" height="440" fill="#0B1626" opacity=".55"/><text x="178" y="215" font-family="Barlow Condensed, sans-serif" font-size="34" font-weight="700" fill="#F3EFE6" text-anchor="middle">ALL 4 SHOTS READY</text><text x="178" y="245" font-family="IBM Plex Mono, monospace" font-size="13" fill="#8DB3E0" text-anchor="middle">checked before the inspector joins</text>`;
+    msg = ['ok','Done. Pick a time for the video inspection.'];
+  } else if (i === 0){
+    body = windowScene() + `<g class="bbox"><rect x="56" y="46" width="244" height="288" fill="none" stroke="#3FB673" stroke-width="3"/>${label(56,24,190,`window frame ${conf(.96)}`,'#3FB673')}</g>
+      <g class="bbox b2"><rect x="62" y="300" width="232" height="30" fill="none" stroke="#3FB673" stroke-width="2.5" stroke-dasharray="7 5"/>${label(62,334,150,`trim ${conf(.91)}`,'#3FB673')}</g>`;
+    msg = ['ok','Whole frame in view. Capture when ready.'];
+  } else if (i === 1){
+    body = `<rect width="356" height="440" fill="#D9D2C5"/><rect x="40" y="0" width="190" height="440" fill="#E9E4DA"/><rect x="60" y="0" width="150" height="440" fill="#A9C4E0"/>
+      <rect x="226" y="0" width="16" height="440" fill="#F5F2EC"/><rect x="242" y="0" width="114" height="440" fill="#CFC6B6"/>
+      <g class="bbox"><rect x="218" y="40" width="32" height="360" fill="none" stroke="#3FB673" stroke-width="3"/>${label(150,16,200,`sealant edge ${conf(.88)}`,'#3FB673')}</g>
+      <g class="bbox b2"><rect x="34" y="60" width="210" height="320" fill="none" stroke="#3FB673" stroke-width="2" stroke-dasharray="7 5"/>${label(34,384,120,`trim ${conf(.90)}`,'#3FB673')}</g>`;
+    msg = ['ok','Sealant bead continuous, no gaps found.'];
+  } else if (i === 2){
+    const z = state.closer;
+    const blur = z ? 0 : 2.2;
+    body = `<defs><filter id="bl"><feGaussianBlur stdDeviation="${blur}"/></filter></defs>
+      <g class="zoomable" style="transform-origin:236px 250px;transform:scale(${z?2.3:1})">${windowScene()}
+        <g filter="url(#bl)"><rect x="206" y="232" width="60" height="38" fill="#F7F5F0"/><rect x="210" y="236" width="52" height="6" fill="#13233A"/><text x="212" y="252" font-family="IBM Plex Mono, monospace" font-size="7" fill="#13233A">U-FACTOR 0.27</text><text x="212" y="262" font-family="IBM Plex Mono, monospace" font-size="7" fill="#13233A">SHGC 0.30</text></g>
+      </g>`;
+    if (!z){
+      body += `<g class="bbox"><rect x="198" y="224" width="76" height="54" fill="none" stroke="#F2B705" stroke-width="3"/>${label(150,282,170,`label · blurry ${conf(.42)}`,'#F2B705')}</g>
+        <g class="bbox b2"><rect x="56" y="46" width="244" height="288" fill="none" stroke="#3FB673" stroke-width="2" opacity=".7"/>${label(56,24,190,`window frame ${conf(.95)}`,'#3FB673')}</g>`;
+      msg = ['warn','Label found, text unreadable. Move closer.'];
+    } else {
+      body += `<g class="bbox"><rect x="158" y="198" width="156" height="108" fill="none" stroke="#3FB673" stroke-width="3"/>${label(140,176,190,`label · readable ${conf(.94)}`,'#3FB673')}</g>
+        <rect x="40" y="330" width="276" height="32" fill="#0B1626" opacity=".85"/><text x="50" y="351" font-family="IBM Plex Mono, monospace" font-size="12" fill="#F3EFE6">read: U-FACTOR 0.27 · SHGC 0.30 [sim]</text>`;
+      msg = ['ok','Label readable. Capture now.'];
+    }
+  } else if (i === 3){
+    body = windowScene() + `<rect x="84" y="196" width="188" height="14" fill="#F2B705"/><g font-family="IBM Plex Mono, monospace" font-size="8" fill="#0B1626">${Array.from({length:12},(_,k)=>`<line x1="${88+k*15}" y1="196" x2="${88+k*15}" y2="${k%2?203:206}" stroke="#0B1626"/>`).join('')}</g>
+      <g class="bbox"><rect x="78" y="188" width="200" height="30" fill="none" stroke="#3FB673" stroke-width="3"/>${label(78,166,170,`tape measure ${conf(.90)}`,'#3FB673')}</g>
+      <rect x="20" y="300" width="316" height="36" fill="#0B1626" opacity=".8"/><text x="30" y="323" font-family="IBM Plex Mono, monospace" font-size="13" fill="#F3EFE6">read: opening ≈ [24 in] wide [sim]</text>`;
+    msg = ['ok','Tape is readable. Capture when ready.'];
+  }
+  $('#camSvg').innerHTML = body;
+  const m = $('#camMsg'); m.className = 'cam-msg ' + msg[0]; m.textContent = msg[1];
+}
+function conf(base){ return (base + (Math.random()-.5)*0.02).toFixed(2); }
+function videoUI(){
+  const i = state.shot;
+  $('#shotLbl').textContent = i >= 4 ? 'DONE' : `SHOT ${i+1} OF 4`;
+  $('#vCount').textContent = i >= 4 ? '4 of 4 checked' : `shot ${i+1} of 4`;
+  $$('#vProg i').forEach((el,k) => { el.className = state.shots[k] ? 'done' : (k===i ? 'cur' : ''); });
+  const cap = $('#captureBtn'), cl = $('#closerBtn');
+  cl.style.display = (i===2 && !state.closer) ? '' : 'none';
+  cap.disabled = i >= 4 || (i===2 && !state.closer);
+  cap.textContent = i >= 4 ? 'All shots captured' : 'Capture shot';
+  $('#shotNotes').innerHTML = SHOTS.map((s,k) => {
+    let tag='—', cls='st-wait';
+    if (state.shots[k]){ tag='OK'; cls='st-ok'; }
+    else if (k===i){ tag = (k===2 && !state.closer) ? 'RE-FILM' : 'NOW'; cls = (k===2 && !state.closer) ? 'st-eye' : 'st-miss'; }
+    return `<div class="nrow"><div class="num">${String(k+1).padStart(2,'0')}</div><div class="body"><span class="t">${s.t}</span><span class="s">${s.s}</span></div><div class="tag ${cls}">${tag}</div></div>`;
+  }).join('');
+  $('#bookPanel').style.display = i >= 4 ? '' : 'none';
+  $('#inspPanel').style.display = state.booked ? '' : 'none';
+  camSvg();
+}
+let camTimer = setInterval(() => { if (current==='video' && state.shot < 4) camSvg(); }, 900);
+$('#captureBtn').addEventListener('click', () => {
+  if (state.shot >= 4) return;
+  state.shots[state.shot] = true;
+  state.shot++;
+  if (state.shot === 4){
+    send('Laurel', 'App', 'All 4 shots look good. Pick an inspection time.', 'toast4');
+    $('#videoStory').innerHTML = 'Pick a slot and book it.';
+  }
+  videoUI();
+});
+$('#closerBtn').addEventListener('click', () => {
+  state.closer = true; videoUI();
+});
+const SLOTS = ['Mon 10:00 AM','Mon 1:30 PM','Tue 9:00 AM','Tue 3:00 PM'];
+$('#slots').innerHTML = SLOTS.map(s => `<button class="slot" data-slot="${s}">${s}<span class="mono">virtual · 20 min [sim]</span></button>`).join('');
+$('#slots').addEventListener('click', e => {
+  const b = e.target.closest('[data-slot]'); if(!b || state.booked) return;
+  state.slot = b.dataset.slot;
+  $$('.slot').forEach(x => x.classList.toggle('sel', x === b));
+  $('#bookBtn').disabled = false;
+});
+$('#bookBtn').addEventListener('click', () => {
+  if (!state.slot) return;
+  state.booked = true; $('#bookBtn').disabled = true; $('#bookBtn').textContent = `Booked: ${state.slot} ✓`;
+  $('#inspSlot').textContent = state.slot + ' [sim]';
+  send('Laurel', 'Text', `Booked: video inspection ${state.slot}. I'll remind you the night before. Keep the tape measure handy.`, 'toast4');
+  send('Inspector', 'Calendar', `New virtual inspection ${state.slot}: [1234 Example St], windows. All 4 shots pre-checked, footage attached.`);
+  $('#videoStory').innerHTML = 'Booked. The inspector decides: <b>Pass</b> or <b>Fail</b>.';
+  videoUI();
+});
+function inspect(result){
+  if (state.insp) return;
+  state.insp = result;
+  $('#passBtn').disabled = $('#failBtn').disabled = true;
+  $('#inspResult').innerHTML = result==='pass' ? '<span class="st-ok">PASSED by inspector (human). Agent starts close-out.</span>' : '<span class="st-miss">FAILED by inspector (human). Agent explains the fix list to Laurel.</span>';
+  send('Laurel', 'Email', result==='pass' ? 'Passed! Upload 1 close-out document to finish and I\'ll close your permit.' : 'The inspector found something to fix. Here is their note in plain words: [inspector note]. I\'ll help you book a re-check.');
+  $('#videoStory').innerHTML = 'Done. See all messages on RC-5.';
+}
+$('#passBtn').addEventListener('click', () => inspect('pass'));
+$('#failBtn').addEventListener('click', () => inspect('fail'));
+
+/* ================= RC-5 MESSAGES ================= */
+const TRIGGERS = {
+  applicant:[
+    {id:'a1', when:'Draft has 1 gap', ch:'App', to:'Laurel', say:'Your insurance name doesn\'t match your tax document. Fix it before you submit.'},
+    {id:'a2', when:'Reviewer posts comments', ch:'Email', to:'Laurel', say:'2 comments on your plans. Here\'s your to-do list: 1) add W-3 size, 2) add header size.'},
+    {id:'a3', when:'Permit issued', ch:'Text', to:'Contractor', say:'Permit issued for [1234 Example St]. Here\'s the link to claim it.'},
+    {id:'a4', when:'Day before inspection, 6 PM', ch:'Text', to:'Laurel', say:'Tomorrow 10 AM. Film these 4 shots tonight, I\'ll check them.'},
+    {id:'a5', when:'Inspection passed', ch:'Email', to:'Laurel', say:'Passed! Upload 1 close-out document to finish.'},
+  ],
+  staff:[
+    {id:'b1', when:'Every morning, 8 AM', ch:'Digest', to:'Technician', say:'3 files ready to issue, 1 needs a human check.'},
+    {id:'b2', when:'Review near deadline', ch:'Dashboard', to:'Supervisor', say:'2 reviews are at day 25 of the 30-day target.'},
+    {id:'b3', when:'Insurance expires mid-job', ch:'Dashboard', to:'Licensing', say:'Contractor coverage ends before the permit does.'},
+    {id:'b4', when:'Video check failed twice', ch:'Dashboard', to:'Inspector', say:'Homeowner stuck on shot 3. Suggest a quick call.'},
+    {id:'b5', when:'Close-out stalled', ch:'Digest', to:'Supervisor', say:'4 permits waiting on close-out documents.'},
+  ],
+};
+function renderTriggers(){
+  for (const [key, el] of [['applicant','#trigApplicant'],['staff','#trigStaff']]){
+    $(el).innerHTML = TRIGGERS[key].map((t,i) => `<div class="trig ${state.fired[t.id]?'sent':''}"><div class="num">${String(i+1).padStart(2,'0')}</div><div class="body"><span class="when">⚡ ${t.when}</span><span class="say">"${t.say}"</span><span class="ch">→ ${t.to.toUpperCase()} · ${t.ch.toUpperCase()}</span></div><div class="fire"><button class="btn small" data-fire="${t.id}" ${state.fired[t.id]?'disabled':''}>${state.fired[t.id]?'Sent':'Fire'}</button></div></div>`).join('');
+  }
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-fire]'); if(!b) return;
+  const t = [...TRIGGERS.applicant, ...TRIGGERS.staff].find(x => x.id === b.dataset.fire);
+  state.fired[t.id] = true;
+  send(t.to, t.ch, t.say);
+  renderTriggers();
+});
+function renderLog(){
+  $('#logCount').textContent = `${state.log.length} sent`;
+  $('#log').innerHTML = state.log.length
+    ? [...state.log].reverse().map(m => `<div class="logrow"><div class="mono">${m.time}</div><div><b>${m.to}</b><br><span class="mono">${m.channel}</span></div><div>${m.text}</div></div>`).join('')
+    : '<div class="empty">No messages yet. Walk through RC-1 to RC-4, or fire a trigger above.</div>';
+}
+
+/* ================= Init / reset ================= */
+function init(){
+  // RC-1
+  $('#pcChecks').innerHTML = ''; $('#pcResult').innerHTML = '';
+  const pb = $('#pcBtn'); pb.disabled = false; pb.textContent = 'Check my application';
+  $('#pcStep').textContent = 'STEP 1 OF 2';
+  $('#pcStory').innerHTML = 'Press <b>Check my application</b>.';
+  pcNotes();
+  // RC-2
+  $('#planDetail').innerHTML = '<span class="lbl">Finding detail</span><p>Tap a pin or a row to see why the agent flagged it and who it goes to.</p>';
+  $('#planStatus').textContent = 'Waiting on the technician.';
+  $('#planStory').innerHTML = 'Tap pin 4, then <b>Request S-1</b>.';
+  renderPins(); renderPlanNotes(); planButtons();
+  // RC-3
+  $$('#gateBody input').forEach(i => { i.checked = false; i.disabled = false; });
+  $('#issuedBox').classList.remove('on');
+  $('#queueStory').innerHTML = 'Tick all three, then <b>Issue permit</b>.';
+  renderQueue();
+  // RC-4
+  $('#bookBtn').disabled = true; $('#bookBtn').textContent = 'Book this slot';
+  $$('.slot').forEach(x => x.classList.remove('sel'));
+  $('#passBtn').disabled = $('#failBtn').disabled = false; $('#inspResult').textContent = '';
+  $('#videoStory').innerHTML = 'Capture each shot. Shot 3 is blurry: <b>Move closer</b>.';
+  videoUI();
+  // RC-5
+  renderTriggers(); renderLog();
+}
+$('#resetBtn').addEventListener('click', () => { state = freshState(); init(); go('precheck'); });
+
+init();
+let start = 'precheck';
+try { const s = localStorage.getItem('rc-sheet'); if (SHEETS.some(x => x.id === s)) start = s; } catch(e){}
+go(start);
+})();
+</script>
+</body>
+</html>
