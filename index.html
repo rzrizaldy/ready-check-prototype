@@ -3,241 +3,213 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Ready-Check Prototype</title>
+<title>Permit Ready-Check Prototype</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <style>
-/* Design tokens: taken from pittsburghpa.gov (Outfit, navy #233b77, gold #f8bd32, pale blue #eaf1fc) */
+/* Tokens from pittsburghpa.gov: Outfit, navy #233b77, gold #f8bd32, pale blue #eaf1fc, text #1f1f1f */
 :root{
-  --navy:#233b77; --navy-dk:#1a2c5a; --navy-md:#345d96; --link:#183e6e;
-  --gold:#f8bd32; --gold-lt:#fef6e0; --gold-dk:#8a5d00;
+  --navy:#233b77; --navy-dk:#1a2c5a; --link:#183e6e;
+  --gold:#f8bd32; --gold-dk:#7a5300; --gold-bg:#fef6e0;
   --sky:#eaf1fc; --bg:#f8f8f8; --white:#fff;
-  --ink:#1f1f1f; --text2:#505050; --line:#dddddd;
-  --green:#1e7b45; --green-lt:#e7f4ec;
-  --red:#b42318; --red-lt:#fdecea;
-  --sans:'Outfit', Arial, sans-serif;
-  --mono:'Roboto Mono', 'Courier New', monospace;
-  --r:10px;
+  --ink:#1f1f1f; --text2:#505050; --line:#dddddd; --line2:#ececec;
+  --green:#1e7b45; --red:#b42318;
+  --sans:'Outfit', Arial, sans-serif; --mono:'Roboto Mono', 'Courier New', monospace;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 [hidden]{display:none !important}
 html,body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.5}
-button{font:inherit;cursor:pointer;border:none;background:none;color:inherit}
+button,select,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:none;background:none}
 button:disabled{cursor:not-allowed}
-a{color:var(--link)}
-.mono{font-family:var(--mono)}
-.ph{border-bottom:1.5px dotted var(--text2);cursor:help}
-.muted{color:var(--text2)}
-.small{font-size:14px}
+.ph{border-bottom:1px dotted var(--text2);cursor:help}
+.muted{color:var(--text2)} .small{font-size:14px} .mono{font-family:var(--mono)}
+h1{font-size:30px;font-weight:700;line-height:1.2}
+h2{font-size:20px;font-weight:600;line-height:1.3}
+h3{font-size:16px;font-weight:600}
+.eyebrow{font-size:13px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--text2)}
 
-/* ---------- Buttons, pills ---------- */
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:11px 18px;font-weight:600;font-size:16px;border:1.5px solid var(--navy);background:var(--white);color:var(--navy);border-radius:8px;transition:background .15s, opacity .15s}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 16px;font-weight:600;font-size:15px;border:1px solid var(--navy);background:var(--white);color:var(--navy);border-radius:3px}
 .btn:hover:not(:disabled){background:var(--sky)}
 .btn.primary{background:var(--navy);color:#fff}
 .btn.primary:hover:not(:disabled){background:var(--navy-dk)}
 .btn.gold{background:var(--gold);border-color:var(--gold);color:var(--ink)}
-.btn.gold:hover:not(:disabled){background:#f5b11a}
-.btn.sm{padding:7px 12px;font-size:14px}
+.btn.gold:hover:not(:disabled){background:#efb21e}
+.btn.sm{padding:6px 10px;font-size:14px}
 .btn.block{width:100%}
 .btn:disabled{opacity:.4}
-.pill{display:inline-block;font-size:13px;font-weight:600;padding:2px 10px;border-radius:999px;white-space:nowrap}
-.p-ok{background:var(--green-lt);color:var(--green)}
-.p-miss{background:var(--red-lt);color:var(--red)}
-.p-eye{background:var(--gold-lt);color:var(--gold-dk)}
-.p-wait{background:#eee;color:var(--text2)}
-.p-info{background:var(--sky);color:var(--navy)}
 
-/* ---------- Top bar ---------- */
-header.top{background:var(--white);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
-.top-in{max-width:1360px;margin:0 auto;padding:10px 24px;display:flex;align-items:center;gap:24px;flex-wrap:wrap}
-.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink)}
-.brand b{display:block;font-size:20px;font-weight:700;letter-spacing:2px;line-height:1}
-.brand span{display:block;font-size:12px;letter-spacing:1.5px;color:var(--text2);text-transform:uppercase}
-.roles{display:flex;gap:4px;background:var(--sky);padding:4px;border-radius:12px;margin-left:auto}
-.roles button{padding:8px 16px;border-radius:9px;font-weight:600;font-size:15px;color:var(--navy);display:flex;align-items:center;gap:8px}
+/* status: a plain word with a small square, no pills */
+.st{font-size:13px;font-weight:600;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+.st::before{content:"";width:9px;height:9px;display:inline-block;background:currentColor}
+.st:empty{display:none}
+.st.ok{color:var(--green)} .st.flag{color:var(--gold-dk)} .st.miss{color:var(--red)} .st.wait{color:var(--text2)} .st.info{color:var(--navy)}
+
+header.top{background:var(--white);border-bottom:1px solid var(--line)}
+.top-in{max-width:1320px;margin:0 auto;padding:10px 24px;display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px}
+.brand b{display:block;font-size:19px;font-weight:700;letter-spacing:2px;line-height:1}
+.brand span{display:block;font-size:12px;letter-spacing:1px;color:var(--text2);text-transform:uppercase}
+.roles{display:flex;border:1px solid var(--line);margin-left:auto}
+.roles button{padding:9px 18px;font-weight:600;font-size:15px;color:var(--navy);border-right:1px solid var(--line);display:flex;gap:8px;align-items:center}
+.roles button:last-child{border-right:none}
 .roles button[aria-selected="true"]{background:var(--navy);color:#fff}
-.roles .dotn{min-width:20px;height:20px;border-radius:10px;background:var(--gold);color:var(--ink);font-size:12px;display:inline-flex;align-items:center;justify-content:center;padding:0 6px}
-.top-right{display:flex;align-items:center;gap:10px}
-.simtag{font-size:13px;color:var(--text2)}
+.roles .n{font-size:12px;background:var(--gold);color:var(--ink);padding:0 6px;line-height:18px}
+.disclaimer{font-size:12px;color:var(--text2)}
 
-/* ---------- Guide band ---------- */
-.guide{background:var(--sky)}
-.guide-in{max-width:1360px;margin:0 auto;padding:12px 24px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
-.guide .step{font-family:var(--mono);font-size:13px;background:var(--white);border:1px solid var(--line);border-radius:6px;padding:2px 8px;color:var(--navy)}
-.guide .txt{font-size:17px;font-weight:500;flex:1;min-width:240px}
+.guide{background:var(--sky);border-bottom:1px solid #d6e2f5}
+.guide-in{max-width:1320px;margin:0 auto;padding:10px 24px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.guide .num{font-family:var(--mono);font-size:13px;color:var(--navy)}
+.guide .txt{font-size:16px;font-weight:500;flex:1;min-width:220px}
+.guide select{border:1px solid var(--line);background:#fff;padding:5px 8px;font-size:14px;max-width:240px}
+.guide .reset{font-size:14px;color:var(--link);text-decoration:underline}
 
-main{max-width:1360px;margin:0 auto;padding:24px}
-.view{display:none}
-.view.on{display:block;animation:fade .2s ease}
-@keyframes fade{from{opacity:0}to{opacity:1}}
+main{max-width:1320px;margin:0 auto;padding:24px}
+.view{display:none} .view.on{display:block}
 
-/* ---------- Cards ---------- */
-.card{background:var(--white);border:1px solid var(--line);border-radius:var(--r)}
-.card-h{padding:14px 18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px}
-.card-h h3{font-size:18px;font-weight:600}
-.card-b{padding:16px 18px}
-.rowi{display:grid;grid-template-columns:28px 1fr auto;gap:10px;padding:12px 18px;border-bottom:1px solid #eee;align-items:start}
-.rowi:last-child{border-bottom:none}
-.rowi .ic{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;margin-top:1px}
-.ic.ok{background:var(--green-lt);color:var(--green)} .ic.miss{background:var(--red-lt);color:var(--red)} .ic.eye{background:var(--gold-lt);color:var(--gold-dk)} .ic.wait{background:#eee;color:var(--text2)}
-.rowi .t{font-weight:600}
-.rowi .s{font-size:14px;color:var(--text2)}
-.rowi .src{font-size:13px;color:var(--text2)}
-.rowi.click{cursor:pointer}
-.rowi.click:hover{background:var(--bg)}
-.rowi.sel{background:var(--gold-lt)}
-h1.title{font-size:34px;font-weight:700;line-height:1.15}
-.eyebrow{font-size:13px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--text2)}
-.note{display:flex;gap:10px;align-items:flex-start;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 14px;font-size:14px;color:var(--text2)}
+.card{background:var(--white);border:1px solid var(--line)}
+.card-h{padding:12px 16px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.card-b{padding:16px}
+.row{display:grid;grid-template-columns:28px 1fr auto;gap:10px;padding:11px 16px;border-bottom:1px solid var(--line2);align-items:start}
+.row:last-child{border-bottom:none}
+.row .k{font-family:var(--mono);font-size:13px;color:var(--text2);padding-top:2px}
+.row .t{font-weight:600}
+.row .s{font-size:14px;color:var(--text2)}
+.row.click{cursor:pointer} .row.click:hover{background:var(--bg)} .row.sel{background:var(--gold-bg)}
+.row.hidden{display:none}
+.kv{width:100%;border-collapse:collapse;font-size:15px}
+.kv td{padding:8px 16px;border-bottom:1px solid var(--line2);vertical-align:top}
+.kv td:first-child{color:var(--text2);width:120px}
+.notice{font-size:15px;color:var(--text2);padding:12px 14px;border:1px solid var(--line);background:var(--white)}
+.grid2{display:grid;grid-template-columns:1fr 360px;gap:20px;align-items:start}
+.stack{display:flex;flex-direction:column;gap:16px}
 
-/* ---------- Applicant ---------- */
-.app-grid{display:grid;grid-template-columns:390px 1fr;gap:32px;align-items:start}
-.phone{width:390px;height:780px;background:#111;border-radius:48px;padding:12px;box-shadow:0 20px 40px rgba(35,59,119,.18);position:relative}
-.screen{width:100%;height:100%;background:var(--bg);border-radius:38px;overflow:hidden;display:flex;flex-direction:column;position:relative}
-.sbar{display:flex;justify-content:space-between;padding:12px 28px 2px;font-size:13px;font-weight:600;background:var(--navy);color:#fff}
-.ahead{background:var(--navy);color:#fff;padding:8px 20px 14px;display:flex;justify-content:space-between;align-items:center}
-.ahead b{font-size:19px;font-weight:600}
-.ahead span{font-size:13px;color:var(--gold);font-weight:600}
-.abody{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px}
-.afoot{padding:12px 16px 20px;border-top:1px solid var(--line);background:var(--white);display:flex;flex-direction:column;gap:8px}
-.q{font-size:26px;font-weight:700;line-height:1.15}
-.sum{background:var(--white);border:1px solid var(--line);border-radius:10px;font-size:14px}
-.sum div{display:grid;grid-template-columns:88px 1fr;padding:7px 12px;border-bottom:1px solid #eee}
-.sum div:last-child{border-bottom:none}
-.sum b{font-weight:500;color:var(--text2)}
-.chk{display:grid;grid-template-columns:26px 1fr;gap:8px;padding:9px 12px;background:var(--white);border:1px solid var(--line);border-radius:10px;font-size:15px;opacity:0;transform:translateY(4px);transition:opacity .3s, transform .3s}
-.chk.show{opacity:1;transform:none}
-.chk .s{font-size:13px;color:var(--text2)}
-.chk.fix{border:2px solid var(--red);background:var(--red-lt)}
-.result{font-size:22px;font-weight:700}
-.ok{color:var(--green)} .miss{color:var(--red)}
-.spinner{display:inline-block;width:15px;height:15px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite}
-.btn:not(.primary):not(.gold) .spinner{border-color:var(--line);border-top-color:var(--navy)}
-@keyframes spin{to{transform:rotate(360deg)}}
-.toast{position:absolute;left:14px;right:14px;top:46px;background:rgba(26,44,90,.97);color:#fff;border-radius:14px;padding:10px 14px;font-size:14px;z-index:5;transform:translateY(calc(-100% - 70px));transition:transform .35s ease;box-shadow:0 8px 20px rgba(0,0,0,.25)}
-.toast.on{transform:none}
-.toast small{display:block;color:var(--gold);font-weight:600;font-size:12px}
-.reqcard{background:var(--gold-lt);border:2px solid var(--gold);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
-.cam{flex:1;background:#1B2430;position:relative;overflow:hidden}
-.cam svg{width:100%;height:100%;display:block}
-.cam .rec{position:absolute;top:10px;left:12px;font-size:12px;font-weight:600;color:#ff6b5b;display:flex;align-items:center;gap:6px}
-.cam .rec i{width:8px;height:8px;border-radius:50%;background:#ff6b5b;animation:blink 1.2s infinite}
-@keyframes blink{50%{opacity:.2}}
-.cam .shotlbl{position:absolute;top:10px;right:12px;font-size:12px;font-weight:600;color:#fff}
-.cam-msg{position:absolute;left:12px;right:12px;bottom:12px;padding:9px 12px;font-size:15px;font-weight:600;border-radius:10px}
-.cam-msg.warn{background:var(--gold-lt);color:var(--ink);border:2px solid var(--gold)}
-.cam-msg.ok{background:var(--green-lt);color:var(--ink);border:2px solid var(--green)}
-.cam-msg.info{background:rgba(255,255,255,.95);color:var(--ink);border:2px solid var(--sky)}
-.progress{display:flex;gap:6px}
-.progress i{flex:1;height:6px;border-radius:3px;background:var(--line)}
-.progress i.done{background:var(--green)} .progress i.cur{background:var(--gold)}
-.bbox{animation:jitter 1.6s ease-in-out infinite}
-.bbox.b2{animation-duration:1.9s;animation-delay:-.4s}
-@keyframes jitter{0%,100%{transform:translate(0,0)}25%{transform:translate(1.5px,-1px)}50%{transform:translate(-1px,1.5px)}75%{transform:translate(1px,1px)}}
-.zoomable{transition:transform .9s cubic-bezier(.3,.7,.2,1)}
-.slots{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.slot{border:1.5px solid var(--line);padding:10px;font-size:15px;font-weight:600;text-align:left;border-radius:10px;background:var(--white)}
-.slot small{display:block;font-weight:400;font-size:12px;color:var(--text2)}
-.slot.sel{border-color:var(--navy);background:var(--sky)}
-.bigstate{text-align:center;padding:30px 10px;display:flex;flex-direction:column;gap:8px;align-items:center}
-.bigstate .ico{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:700}
-
-/* vertical status steps */
-.vsteps{list-style:none;padding:8px 18px 14px}
-.vsteps li{display:grid;grid-template-columns:28px 1fr;gap:12px;position:relative;padding:8px 0}
-.vsteps li::before{content:"";position:absolute;left:13px;top:34px;bottom:-8px;width:2px;background:var(--line)}
-.vsteps li:last-child::before{display:none}
-.vsteps .b{width:28px;height:28px;border-radius:50%;border:2px solid var(--line);background:var(--white);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--text2);z-index:1}
-.vsteps li.done .b{background:var(--green);border-color:var(--green);color:#fff}
-.vsteps li.cur .b{border-color:var(--gold);background:var(--gold);color:var(--ink)}
-.vsteps .t{font-weight:600}
-.vsteps .s{font-size:14px;color:var(--text2)}
-.inbox .m{padding:12px 18px;border-bottom:1px solid #eee}
+.steps{list-style:none}
+.steps li{display:grid;grid-template-columns:26px 1fr;gap:10px;padding:10px 16px;border-bottom:1px solid var(--line2)}
+.steps li:last-child{border-bottom:none}
+.steps .b{width:22px;height:22px;border:1px solid var(--line);font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;color:var(--text2);margin-top:1px}
+.steps li.done .b{background:var(--green);border-color:var(--green);color:#fff}
+.steps li.cur .b{border:2px solid var(--navy);color:var(--navy)}
+.steps .t{font-weight:600}
+.inbox .m{padding:10px 16px;border-bottom:1px solid var(--line2);font-size:15px}
 .inbox .m:last-child{border-bottom:none}
-.inbox .meta{font-size:13px;color:var(--text2);display:flex;gap:8px;align-items:center}
-.empty{padding:16px 18px;color:var(--text2);font-size:15px}
+.inbox .meta{font-size:13px;color:var(--text2)}
+.inbox .m.new{background:var(--gold-bg)}
+.empty{padding:14px 16px;color:var(--text2);font-size:15px}
+.result{font-size:22px;font-weight:700}
+.result.ok{color:var(--green)} .result.miss{color:var(--red)}
+.slots{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.slot{border:1px solid var(--line);padding:10px;text-align:left;background:#fff}
+.slot b{display:block;font-weight:600} .slot span{font-size:13px;color:var(--text2)}
+.slot.sel{border:2px solid var(--navy);padding:9px}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(0,0,0,.2);border-top-color:currentColor;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
 
-/* ---------- Staff shell (city + inspector), adapted from the Figma Make "Permit Intake" layout ---------- */
-.shell{display:grid;grid-template-columns:250px 1fr;min-height:720px;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--white)}
-.side{background:var(--navy-dk);color:#fff;display:flex;flex-direction:column;padding:20px 14px;gap:6px}
-.side .logo{display:flex;align-items:center;gap:10px;padding:0 6px 18px}
-.side .logo b{display:block;font-size:17px;letter-spacing:2px;line-height:1.1}
-.side .logo span{display:block;font-size:11px;letter-spacing:1.5px;color:#b9c6e4;text-transform:uppercase}
-.side .sec{font-size:12px;letter-spacing:1.2px;text-transform:uppercase;color:#9fb0d6;padding:14px 8px 6px}
-.side .nav{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;border-radius:8px;font-size:15px;color:#e6ecf8;text-align:left;width:100%}
-.side .nav:hover{background:rgba(255,255,255,.07)}
-.side .nav[aria-current="true"]{background:rgba(255,255,255,.12);box-shadow:inset 3px 0 0 var(--gold);color:#fff;font-weight:600}
-.side .cnt{font-size:12px;background:rgba(255,255,255,.15);border-radius:6px;padding:0 7px}
-.side .alerts{margin-top:auto;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:12px;font-size:13px;color:#d5def0;display:flex;flex-direction:column;gap:8px}
-.side .alerts b{color:var(--gold);font-size:12px;letter-spacing:1px;text-transform:uppercase}
-.side .user{display:flex;gap:10px;align-items:center;padding:12px 6px 0;font-size:14px}
-.side .av{width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600}
-.content{padding:20px 28px 28px;display:flex;flex-direction:column;gap:18px;min-width:0}
+/* staff shell, adapted from the Figma Make "Permit Intake" workspace */
+.shell{display:grid;grid-template-columns:230px 1fr;border:1px solid var(--line);background:var(--white);min-height:680px}
+.side{background:var(--navy);color:#fff;display:flex;flex-direction:column;padding:18px 0}
+.side .logo{padding:0 18px 16px;display:flex;gap:10px;align-items:center}
+.side .logo b{display:block;letter-spacing:2px;font-size:16px;line-height:1.1}
+.side .logo span{display:block;font-size:11px;letter-spacing:1px;color:#b9c6e4;text-transform:uppercase}
+.side .sec{font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#a9b8dc;padding:14px 18px 6px}
+.side .nav{display:flex;justify-content:space-between;align-items:center;width:100%;padding:9px 18px;font-size:15px;color:#e6ecf8;text-align:left}
+.side .nav:hover{background:rgba(255,255,255,.08)}
+.side .nav[aria-current="true"]{background:#fff;color:var(--navy);font-weight:600}
+.side .nav .c{font-size:12px;font-family:var(--mono)}
+.side .foot{margin-top:auto;border-top:1px solid rgba(255,255,255,.2);padding:12px 18px 0;font-size:13px;color:#d5def0}
+.side .foot b{display:block;color:var(--gold);font-size:12px;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px}
+.side .ph{border-color:#d5def0}
+.content{padding:20px 24px 24px;display:flex;flex-direction:column;gap:16px;min-width:0}
 .crumbs{font-size:14px;color:var(--text2)}
 .crumbs button{color:var(--link);text-decoration:underline}
-.stepper{display:grid;grid-template-columns:repeat(5,1fr);border:1px solid var(--line);border-radius:10px;overflow:hidden}
-.stepper div{padding:10px 14px;border-right:1px solid var(--line);font-size:15px;font-weight:600;color:var(--text2)}
+.stepper{display:grid;grid-template-columns:repeat(5,1fr);border:1px solid var(--line)}
+.stepper div{padding:8px 12px;border-right:1px solid var(--line);font-size:14px;font-weight:600;color:var(--text2)}
 .stepper div:last-child{border-right:none}
-.stepper div small{display:block;font-family:var(--mono);font-size:12px;font-weight:400}
-.stepper .done{color:var(--green)}
-.stepper .cur{background:var(--navy);color:#fff}
-.rec{display:flex;gap:14px;background:var(--gold-lt);border:1px solid #f3dca0;border-left:4px solid var(--gold);border-radius:10px;padding:14px 18px}
-.rec.good{background:var(--green-lt);border-color:#bfe0cb;border-left-color:var(--green)}
-.rec .lbl{font-size:12px;letter-spacing:1.2px;text-transform:uppercase;font-weight:600;color:var(--gold-dk)}
+.stepper small{display:block;font-family:var(--mono);font-weight:400;font-size:12px}
+.stepper .done{color:var(--green)} .stepper .cur{background:var(--navy);color:#fff}
+.rec{border:1px solid var(--line);display:grid;grid-template-columns:1fr auto;gap:16px;align-items:center;padding:12px 16px;background:var(--white)}
+.rec .lbl{font-size:12px;letter-spacing:1px;text-transform:uppercase;font-weight:600;color:var(--gold-dk)}
 .rec.good .lbl{color:var(--green)}
-.rec h3{font-size:20px;font-weight:600}
-.rec p{font-size:15px;color:var(--text2)}
-.cols{display:grid;grid-template-columns:1fr 340px;gap:18px;align-items:start}
-.stack{display:flex;flex-direction:column;gap:18px}
+.rec h2{margin:2px 0}
+.rec p{font-size:14px;color:var(--text2)}
 table.q{width:100%;border-collapse:collapse;font-size:15px}
-table.q th{text-align:left;font-size:13px;font-weight:600;color:var(--text2);padding:10px 16px;border-bottom:1px solid var(--line);background:var(--bg)}
-table.q td{padding:12px 16px;border-bottom:1px solid #eee}
-table.q tr.click{cursor:pointer}
-table.q tr.click:hover td{background:var(--sky)}
-table.q tr.dim td{color:#999}
-.plan svg{width:100%;height:auto;display:block;border-radius:0 0 var(--r) var(--r)}
+table.q th{text-align:left;font-size:13px;font-weight:600;color:var(--text2);padding:9px 14px;border-bottom:1px solid var(--line);background:var(--bg)}
+table.q td{padding:11px 14px;border-bottom:1px solid var(--line2)}
+table.q tr.click{cursor:pointer} table.q tr.click:hover td{background:var(--sky)}
+table.q tr.dim td{color:#777}
+table.q tr.on td{background:var(--gold-bg)}
+.plan svg{width:100%;height:auto;display:block}
 .pin{cursor:pointer}
-.pin circle{transition:r .15s}
-.pin:hover circle,.pin.sel circle{r:24}
 .pin.sel circle{stroke:#fff;stroke-width:4}
-.detail{padding:14px 18px;border-top:1px solid var(--line);font-size:15px;display:flex;flex-direction:column;gap:4px;background:var(--bg)}
-.doc{display:grid;grid-template-columns:30px 1fr auto;gap:10px;align-items:center;padding:10px 18px;border-bottom:1px solid #eee;font-size:15px}
+.toggle{font-size:14px;display:flex;gap:6px;align-items:center;cursor:pointer}
+.detail{padding:12px 16px;border-top:1px solid var(--line);background:var(--bg);font-size:15px}
+.confirm{display:grid;grid-template-columns:22px 1fr;gap:8px;font-size:15px;padding:7px 0;cursor:pointer}
+.confirm input{width:17px;height:17px;margin-top:3px;accent-color:var(--navy)}
+.doc{display:grid;grid-template-columns:1fr auto;gap:10px;padding:10px 16px;border-bottom:1px solid var(--line2);font-size:15px}
 .doc:last-child{border-bottom:none}
-.doc .f{width:26px;height:32px;border:1.5px solid var(--line);border-radius:3px;font-size:9px;display:flex;align-items:flex-end;justify-content:center;color:var(--text2);padding-bottom:2px}
-.confirm{display:grid;grid-template-columns:22px 1fr;gap:10px;font-size:15px;align-items:start;padding:8px 0;cursor:pointer}
-.confirm input{width:18px;height:18px;margin-top:3px;accent-color:var(--navy)}
-.humanonly{font-size:13px;color:var(--text2);display:flex;align-items:center;gap:6px}
-.shots{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
-.shot{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--white)}
-.shot svg{width:100%;aspect-ratio:356/300;display:block;background:#1B2430}
-.shot div{padding:8px 10px;font-size:14px}
 
-footer.foot{max-width:1360px;margin:0 auto;padding:0 24px 28px;font-size:13px;color:var(--text2)}
+.vm table{width:100%;border-collapse:collapse;font-size:14px}
+.vm th{text-align:left;font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;padding:6px 16px;border-bottom:1px solid var(--line)}
+.vm td{padding:7px 16px;border-bottom:1px solid var(--line2)}
+.vm td.c{font-family:var(--mono);font-size:13px;white-space:nowrap}
+.bar{display:inline-block;width:56px;height:6px;background:var(--line2);vertical-align:middle;margin-right:8px}
+.bar i{display:block;height:100%}
+.pipe{display:grid;grid-template-columns:22px 1fr;gap:8px;padding:9px 16px;border-bottom:1px solid var(--line2);font-size:14px}
+.pipe .k{font-family:var(--mono);font-size:12px;color:var(--text2);padding-top:1px}
 
-@media (max-width:1100px){
-  .app-grid{grid-template-columns:1fr}
-  .phone{margin:0 auto}
-  .cols{grid-template-columns:1fr}
-  .shots{grid-template-columns:repeat(2,1fr)}
-}
+/* inspector field view */
+.field{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:16px;align-items:start}
+.vf{position:relative;background:#cfdbe8;aspect-ratio:4/3;overflow:hidden;touch-action:none;cursor:grab;border:1px solid var(--line)}
+.vf:active{cursor:grabbing}
+.vf canvas{display:block;width:100%;height:100%}
+.vf svg.ov{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.vf .corner{position:absolute;width:26px;height:26px;border-color:#fff;border-style:solid;pointer-events:none;opacity:.9}
+.vf .c1{top:12px;left:12px;border-width:2px 0 0 2px} .vf .c2{top:12px;right:12px;border-width:2px 2px 0 0}
+.vf .c3{bottom:12px;left:12px;border-width:0 0 2px 2px} .vf .c4{bottom:12px;right:12px;border-width:0 2px 2px 0}
+.vf .hud{position:absolute;left:12px;right:12px;bottom:14px;display:flex;justify-content:center;pointer-events:none}
+.vf .hud span{background:rgba(31,31,31,.85);color:#fff;font-size:15px;font-weight:500;padding:6px 12px}
+.vf .hud span.good{background:rgba(30,123,69,.92)}
+.vf .tl{position:absolute;top:16px;left:46px;font-family:var(--mono);font-size:12px;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.7);pointer-events:none}
+.vf .flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;transition:opacity .3s}
+.vf .flash.on{opacity:.85;transition:none}
+.vf .fallback{position:absolute;inset:0;display:flex;flex-direction:column;gap:10px;align-items:center;justify-content:center;background:var(--bg);text-align:center;padding:20px}
+.ctrl{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px}
+.ctrl .help{font-size:13px;color:var(--text2);margin-left:auto}
+.thumbs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
+.thumb{border:1px solid var(--line);background:#fff;text-align:left;font-size:13px}
+.thumb .im{aspect-ratio:4/3;background:var(--line2);position:relative;overflow:hidden}
+.thumb .im img{width:100%;height:100%;object-fit:cover;display:block}
+.thumb .cap{padding:5px 7px}
+.thumb.sel{outline:2px solid var(--navy);outline-offset:-2px}
+
+.photo{position:relative;background:#cfdbe8;aspect-ratio:4/3}
+.photo img{width:100%;height:100%;display:block;object-fit:cover}
+.flagbox{border-top:1px solid var(--line)}
+.flagq{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+.flagq .btn.on{background:var(--navy);color:#fff}
+
+footer.foot{max-width:1320px;margin:0 auto;padding:0 24px 28px;font-size:13px;color:var(--text2)}
+
+@media (max-width:1100px){ .grid2,.field{grid-template-columns:1fr !important} }
 @media (max-width:820px){
   .shell{grid-template-columns:1fr}
   .side{display:none}
-  .content{padding:16px}
-  .stepper{grid-template-columns:repeat(5,minmax(0,1fr))}
-  .stepper div{padding:8px;font-size:13px}
-  .stepper div small{display:none}
+  .content{padding:14px}
   .roles{margin-left:0;width:100%}
-  .roles button{flex:1;justify-content:center;padding:8px 6px;font-size:14px}
+  .roles button{flex:1;justify-content:center;padding:8px 4px;font-size:14px}
+  .stepper div{padding:6px;font-size:12px}
+  .stepper small{display:none}
+  .rec{grid-template-columns:1fr}
+  .thumbs{grid-template-columns:repeat(2,1fr)}
 }
 @media (max-width:480px){
-  main{padding:16px}
-  .top-in,.guide-in{padding-left:16px;padding-right:16px}
-  .phone{width:100%;max-width:390px;height:720px;padding:8px;border-radius:40px}
-  .screen{border-radius:32px}
-  h1.title{font-size:26px}
+  main{padding:14px}
+  .top-in,.guide-in{padding-left:14px;padding-right:14px}
+  h1{font-size:24px}
   table.q th:nth-child(3),table.q td:nth-child(3){display:none}
+  .ctrl .help{display:none}
+  .vf .hud span{font-size:13px}
 }
 </style>
 </head>
@@ -246,26 +218,25 @@ footer.foot{max-width:1360px;margin:0 auto;padding:0 24px 28px;font-size:13px;co
 <header class="top">
   <div class="top-in">
     <div class="brand">
-      <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><rect x="2" y="16" width="5" height="16" fill="#f8bd32"/><rect x="9" y="8" width="5" height="24" fill="#f8bd32"/><rect x="16" y="2" width="5" height="30" fill="#233b77"/><rect x="23" y="12" width="5" height="20" fill="#f8bd32"/><rect x="0" y="31" width="34" height="3" fill="#233b77"/></svg>
+      <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><rect x="2" y="14" width="5" height="14" fill="#f8bd32"/><rect x="9" y="6" width="5" height="22" fill="#233b77"/><rect x="16" y="10" width="5" height="18" fill="#f8bd32"/><rect x="23" y="17" width="5" height="11" fill="#233b77"/></svg>
       <div><b>PITTSBURGH</b><span>Permit Ready-Check · prototype</span></div>
     </div>
-    <nav class="roles" role="tablist" aria-label="Who is using it">
-      <button role="tab" data-view="app">Applicant <span class="dotn" id="nApp" hidden></span></button>
-      <button role="tab" data-view="city">City dashboard <span class="dotn" id="nCity" hidden></span></button>
-      <button role="tab" data-view="insp">Inspector <span class="dotn" id="nInsp" hidden></span></button>
-    </nav>
-    <div class="top-right">
-      <span class="simtag">Simulated data</span>
-      <button class="btn sm" id="resetBtn">Reset</button>
+    <div class="roles" role="tablist" aria-label="Choose a view">
+      <button role="tab" data-view="app">Applicant <span class="n" id="n-app" hidden></span></button>
+      <button role="tab" data-view="city">City office <span class="n" id="n-city" hidden></span></button>
+      <button role="tab" data-view="insp">Inspector <span class="n" id="n-insp" hidden></span></button>
     </div>
+    <span class="disclaimer">Simulated data. Not a City of Pittsburgh site.</span>
   </div>
 </header>
 
-<div class="guide" aria-live="polite">
+<div class="guide">
   <div class="guide-in">
-    <span class="step" id="gStep">Step 1 of 6</span>
+    <span class="num" id="gNum"></span>
     <span class="txt" id="gTxt"></span>
-    <button class="btn sm primary" id="gGo" hidden></button>
+    <button class="btn primary sm" id="gGo" hidden></button>
+    <select id="jump" aria-label="Jump to a step"></select>
+    <button class="reset" id="reset">Reset</button>
   </div>
 </div>
 
@@ -273,578 +244,759 @@ footer.foot{max-width:1360px;margin:0 auto;padding:0 24px 28px;font-size:13px;co
 
 <!-- ================= APPLICANT ================= -->
 <section class="view" id="v-app">
-  <div class="app-grid">
-    <div class="phone">
-      <div class="screen">
-        <div class="toast" id="toast"><small>READY-CHECK</small><span class="tx"></span></div>
-        <div class="sbar"><span id="clock">9:41</span><span>●●● LTE</span></div>
-        <div class="ahead"><b>Ready-Check</b><span id="aStage">Step 1 of 2</span></div>
-        <div id="phoneBody" style="flex:1;display:flex;flex-direction:column;min-height:0"></div>
-      </div>
-    </div>
-
+  <div class="eyebrow">Applicant · Laurel <span class="ph" title="Placeholder">[Lastname]</span></div>
+  <h1>Replace 4 windows</h1>
+  <p class="muted">Window W-3 gets bigger, so this is a standard permit with drawings. <span class="ph">[1234 Example St]</span></p>
+  <div class="grid2" style="margin-top:18px">
+    <div class="card" id="appMain"></div>
     <div class="stack">
-      <div>
-        <div class="eyebrow">Applicant · Laurel <span class="ph" title="Placeholder name">[Lastname]</span></div>
-        <h1 class="title">Replacing 4 windows</h1>
-        <p class="muted">One window (W-3) gets bigger, so it needs a standard permit with drawings.</p>
-      </div>
-      <div class="card">
-        <div class="card-h"><h3>My permit</h3><span class="pill p-info" id="aPill">Not submitted</span></div>
-        <ol class="vsteps" id="aSteps"></ol>
-      </div>
-      <div class="card">
-        <div class="card-h"><h3>Messages</h3><span class="muted small">app · text · email</span></div>
-        <div class="inbox" id="aInbox"></div>
-      </div>
+      <div class="card"><div class="card-h"><h3>My permit</h3><span class="st info" id="appSt"></span></div><ol class="steps" id="appSteps"></ol></div>
+      <div class="card"><div class="card-h"><h3>Messages</h3><span class="small muted">from Ready-Check and the City</span></div><div class="inbox" id="inbox"></div></div>
     </div>
   </div>
 </section>
 
-<!-- ================= CITY DASHBOARD ================= -->
+<!-- ================= CITY OFFICE ================= -->
 <section class="view" id="v-city">
   <div class="shell">
     <aside class="side">
-      <div class="logo">
-        <svg width="30" height="30" viewBox="0 0 34 34" aria-hidden="true"><rect x="2" y="16" width="5" height="16" fill="#f8bd32"/><rect x="9" y="8" width="5" height="24" fill="#f8bd32"/><rect x="16" y="2" width="5" height="30" fill="#f8bd32"/><rect x="23" y="12" width="5" height="20" fill="#f8bd32"/></svg>
-        <div><b>PITTSBURGH</b><span>Permit intake</span></div>
-      </div>
-      <div class="sec">PLI workspace</div>
-      <button class="nav" data-cpage="queue"><span>Application queue</span><span class="cnt" id="qCount">3</span></button>
-      <button class="nav" data-cpage="file" id="navFile" hidden><span>1234 Example St</span><span class="cnt">open</span></button>
-      <div class="alerts" id="cityAlerts"><b>Agent alerts</b><span>No alerts yet.</span></div>
-      <div class="user"><span class="av">JT</span><div>Application technician<br><span style="font-size:12px;color:#9fb0d6"><span class="ph" style="border-color:#9fb0d6">[J. Technician]</span></span></div></div>
+      <div class="logo"><svg width="26" height="26" viewBox="0 0 30 30" aria-hidden="true"><rect x="2" y="14" width="5" height="14" fill="#f8bd32"/><rect x="9" y="6" width="5" height="22" fill="#f8bd32"/><rect x="16" y="10" width="5" height="18" fill="#f8bd32"/><rect x="23" y="17" width="5" height="11" fill="#f8bd32"/></svg><div><b>PITTSBURGH</b><span>Permits office</span></div></div>
+      <div class="sec">Workspace</div>
+      <button class="nav" data-cpage="queue">Application queue <span class="c" id="cQn"></span></button>
+      <button class="nav" data-cpage="review">Inspection review <span class="c" id="cRn"></span></button>
+      <div class="sec" id="cFileSec" hidden>Open file</div>
+      <button class="nav" data-cpage="file" id="cFileNav" hidden>[1234 Example St]</button>
+      <div class="foot"><b>Agent</b><span id="cAlert"></span><div style="margin-top:10px">Signed in: <span class="ph">[J. Technician]</span></div></div>
     </aside>
+    <div class="content">
 
-    <div class="content" id="cityContent">
-      <!-- queue page -->
-      <div id="cQueue" class="stack">
-        <div>
-          <div class="eyebrow">Residential permits</div>
-          <h1 class="title">Application queue</h1>
-          <p class="muted">The agent sorts each file. People decide.</p>
-        </div>
-        <div class="card" style="overflow-x:auto">
-          <table class="q"><thead><tr><th>Address</th><th>Work</th><th>Days waiting</th><th>Agent sort</th></tr></thead><tbody id="qBody"></tbody></table>
-        </div>
-        <div class="note">ⓘ Sorting only changes the order. The agent can't approve, reject or issue.</div>
+      <div id="cp-queue">
+        <div class="eyebrow">Residential permits</div>
+        <h1>Application queue</h1>
+        <p class="muted" style="margin-bottom:14px">The agent checks each file and sorts it. People decide.</p>
+        <div class="card"><table class="q"><thead><tr><th>Address</th><th>Work</th><th>Days waiting</th><th>Agent sort</th></tr></thead><tbody id="qBody"></tbody></table></div>
       </div>
 
-      <!-- file page -->
-      <div id="cFile" class="stack" hidden>
+      <div id="cp-file" hidden>
         <div class="crumbs"><button data-cpage="queue">Application queue</button> › <span class="ph">[APP-2026-XXXX]</span></div>
-        <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap">
-          <div>
-            <div class="eyebrow">Window alteration · standard permit</div>
-            <h1 class="title"><span class="ph" title="Placeholder address">[1234 Example St]</span></h1>
-            <div class="muted small">Laurel <span class="ph">[Lastname]</span> · contractor <span class="ph">[Three Rivers Window Co.]</span></div>
+        <div style="margin-top:6px"><div class="eyebrow">Window alteration · standard permit</div><h1><span class="ph">[1234 Example St]</span></h1></div>
+        <div class="stepper" id="fStepper" style="margin-top:14px"></div>
+        <div class="rec" id="fRec" style="margin-top:14px"></div>
+        <div class="grid2" style="grid-template-columns:minmax(0,1fr) 320px;margin-top:14px">
+          <div class="card plan">
+            <div class="card-h"><h3>Drawing check · sheet A-1</h3><label class="toggle"><input type="checkbox" id="vmToggle" checked> Show what the vision model read</label></div>
+            <svg viewBox="0 0 1040 620" role="img" aria-label="Floor plan A-1 with vision model boxes and five numbered findings">
+              <defs><pattern id="bp" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M20 0 H0 V20" fill="none" stroke="#2f4f8a" stroke-width="1"/></pattern></defs>
+              <rect width="1040" height="620" fill="#1f3a6e"/><rect width="1040" height="620" fill="url(#bp)"/>
+              <g stroke="#e8eef8" fill="none">
+                <rect x="60" y="60" width="600" height="420" stroke-width="8"/>
+                <line x1="340" y1="60" x2="340" y2="300" stroke-width="6"/><line x1="60" y1="300" x2="660" y2="300" stroke-width="6"/>
+                <line x1="500" y1="300" x2="500" y2="480" stroke-width="6"/><line x1="200" y1="300" x2="200" y2="480" stroke-width="6"/>
+                <path d="M340 150 A50 50 0 0 1 390 200" stroke-width="2"/><line x1="340" y1="200" x2="390" y2="200" stroke-width="2"/>
+                <rect x="140" y="52" width="110" height="16" fill="#1f3a6e" stroke-width="3"/><rect x="420" y="52" width="110" height="16" fill="#1f3a6e" stroke-width="3"/><rect x="300" y="472" width="110" height="16" fill="#1f3a6e" stroke-width="3"/>
+                <g stroke-width="2"><line x1="520" y1="320" x2="640" y2="320"/><line x1="520" y1="345" x2="640" y2="345"/><line x1="520" y1="370" x2="640" y2="370"/><line x1="520" y1="395" x2="640" y2="395"/><line x1="520" y1="420" x2="640" y2="420"/><line x1="520" y1="445" x2="640" y2="445"/></g>
+                <line x1="60" y1="550" x2="660" y2="550" stroke-width="2"/>
+                <rect x="760" y="400" width="250" height="180" stroke-width="3"/><line x1="760" y1="450" x2="1010" y2="450" stroke-width="2"/><line x1="760" y1="500" x2="1010" y2="500" stroke-width="2"/>
+                <rect x="760" y="60" width="250" height="140" stroke-width="2" stroke-dasharray="8 6"/>
+              </g>
+              <rect x="652" y="120" width="16" height="150" fill="#1f3a6e" stroke="#f8bd32" stroke-width="3" stroke-dasharray="10 6"/>
+              <line x1="676" y1="110" x2="676" y2="280" stroke="#f8bd32" stroke-width="3"/>
+              <g font-family="Roboto Mono, monospace" fill="#e8eef8" font-size="18" text-anchor="middle"><text x="200" y="190">KITCHEN</text><text x="500" y="200">BEDROOM 2</text><text x="130" y="400">BATH</text><text x="350" y="400">LIVING</text><text x="580" y="470" font-size="14">STAIR</text></g>
+              <g font-family="Roboto Mono, monospace" fill="#e8eef8" font-size="14" text-anchor="middle"><text x="195" y="42">W-1 30x48</text><text x="475" y="42">W-2 30x48</text><text x="355" y="512">W-4 30x48</text><text x="360" y="576">24'-0"</text></g>
+              <text x="640" y="105" font-family="Roboto Mono, monospace" font-size="14" fill="#f8bd32" text-anchor="end">W-3 ? x ?</text>
+              <text x="700" y="210" font-family="Roboto Mono, monospace" font-size="12" fill="#f8bd32" transform="rotate(90 700 210)" text-anchor="middle">NEW HEADER</text>
+              <g font-family="Roboto Mono, monospace" fill="#e8eef8" font-size="14"><text x="775" y="92">SHEET INDEX</text><text x="775" y="122">A-1 FLOOR PLAN</text><text x="775" y="148">A-2 ELEVATIONS</text><text x="775" y="174">S-1 SITE PLAN</text><text x="772" y="432">OWNER: LAUREL [-]</text><text x="772" y="482">[1234 EXAMPLE ST]</text><text x="772" y="545" font-size="16">A-1 of 3 · 1/4in=1ft</text></g>
+              <g id="vmLayer" font-family="Roboto Mono, monospace" font-size="12" pointer-events="none">
+                <g stroke="#5fd08f" stroke-width="2" fill="none" stroke-dasharray="6 4">
+                  <rect x="132" y="26" width="126" height="50"/><rect x="412" y="26" width="126" height="50"/><rect x="292" y="464" width="126" height="56"/>
+                  <rect x="752" y="392" width="266" height="196"/><rect x="752" y="52" width="266" height="156"/><rect x="52" y="532" width="616" height="54"/>
+                </g>
+                <rect x="636" y="92" width="80" height="190" fill="none" stroke="#f8bd32" stroke-width="2" stroke-dasharray="6 4"/>
+                <g fill="#5fd08f"><text x="134" y="92">window 0.93</text><text x="414" y="92">window 0.94</text><text x="294" y="536">window 0.92</text><text x="754" y="604">title block 0.98</text><text x="754" y="224">sheet index 0.97</text><text x="440" y="602">dimension 0.95</text></g>
+                <text x="630" y="298" fill="#f8bd32" text-anchor="end">window, no size 0.71</text>
+              </g>
+              <g id="pins"></g>
+            </svg>
+            <div class="pipe" style="border-top:1px solid var(--line)"><span class="k">AI</span><div><b>Read by a vision language model</b> <span class="ph">[e.g. Claude]</span>, with document AI for the text. <span class="muted">7 elements, 5 findings <span class="ph">[simulated]</span>. Under 0.80 goes to a person.</span></div></div>
+            <div id="planList"></div>
+            <div class="detail" id="planDetail"></div>
           </div>
-        </div>
-        <div class="stepper" id="cStepper"></div>
-        <div class="rec" id="cRec"></div>
-        <div class="cols">
           <div class="stack">
-            <div class="card plan">
-              <div class="card-h"><h3>Drawing check · sheet A-1</h3><span class="muted small">tap a numbered pin</span></div>
-              <svg id="planSvg" viewBox="0 0 1040 620" role="img" aria-label="Floor plan A-1 with five agent findings">
-                <defs><pattern id="bp" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M20 0 H0 V20" fill="none" stroke="#345d96" stroke-width="1"/></pattern></defs>
-                <rect width="1040" height="620" fill="#233b77"/><rect width="1040" height="620" fill="url(#bp)"/>
-                <g stroke="#eaf1fc" fill="none">
-                  <rect x="60" y="60" width="600" height="420" stroke-width="8"/>
-                  <line x1="340" y1="60" x2="340" y2="300" stroke-width="6"/><line x1="60" y1="300" x2="660" y2="300" stroke-width="6"/>
-                  <line x1="500" y1="300" x2="500" y2="480" stroke-width="6"/><line x1="200" y1="300" x2="200" y2="480" stroke-width="6"/>
-                  <path d="M340 150 A50 50 0 0 1 390 200" stroke-width="2"/><line x1="340" y1="200" x2="390" y2="200" stroke-width="2"/>
-                  <rect x="140" y="52" width="110" height="16" fill="#233b77" stroke-width="3"/><rect x="420" y="52" width="110" height="16" fill="#233b77" stroke-width="3"/><rect x="300" y="472" width="110" height="16" fill="#233b77" stroke-width="3"/>
-                  <g stroke-width="2"><line x1="520" y1="320" x2="640" y2="320"/><line x1="520" y1="345" x2="640" y2="345"/><line x1="520" y1="370" x2="640" y2="370"/><line x1="520" y1="395" x2="640" y2="395"/><line x1="520" y1="420" x2="640" y2="420"/><line x1="520" y1="445" x2="640" y2="445"/></g>
-                  <line x1="60" y1="550" x2="660" y2="550" stroke-width="2"/>
-                  <rect x="760" y="400" width="250" height="180" stroke-width="3"/><line x1="760" y1="450" x2="1010" y2="450" stroke-width="2"/><line x1="760" y1="500" x2="1010" y2="500" stroke-width="2"/>
-                  <rect x="760" y="60" width="250" height="140" stroke-width="2" stroke-dasharray="8 6"/>
-                </g>
-                <g stroke="#f8bd32" fill="#233b77"><rect x="652" y="120" width="16" height="150" stroke-width="3" stroke-dasharray="10 6"/><line x1="676" y1="110" x2="676" y2="280" stroke-width="3"/></g>
-                <g font-family="Outfit, sans-serif" fill="#eaf1fc" text-anchor="middle">
-                  <g font-size="20" font-weight="600"><text x="200" y="190">KITCHEN</text><text x="500" y="200">BEDROOM 2</text><text x="130" y="400">BATH</text><text x="350" y="400">LIVING</text></g>
-                  <text x="580" y="470" font-size="16">STAIR</text>
-                  <g font-size="15"><text x="195" y="45">W-1  30x48</text><text x="475" y="45">W-2  30x48</text><text x="355" y="510">W-4  30x48</text></g>
-                  <text x="360" y="578" font-size="16">24'-0"</text>
-                </g>
-                <text x="640" y="105" font-family="Outfit, sans-serif" font-size="15" fill="#f8bd32" text-anchor="end">W-3  ? x ?</text>
-                <g font-family="Outfit, sans-serif" fill="#eaf1fc" font-size="15">
-                  <text x="775" y="92" font-weight="600">SHEET INDEX</text><text x="775" y="122">A-1  FLOOR PLAN</text><text x="775" y="148">A-2  ELEVATIONS</text><text x="775" y="174">S-1  SITE PLAN</text>
-                  <text x="772" y="432">OWNER: LAUREL [—]</text><text x="772" y="482">[1234 EXAMPLE ST] PGH</text><text x="772" y="545" font-size="18" font-weight="600">A-1 of 3 · 1/4in=1ft</text>
-                </g>
-                <g id="pins"></g>
-              </svg>
-              <div id="planList"></div>
-              <div class="detail" id="planDetail"><span class="muted">Pick a finding to see why the agent flagged it and who it goes to.</span></div>
-            </div>
-          </div>
-
-          <div class="stack">
+            <div class="card"><div class="card-h"><h3>Submission packet</h3><span class="small muted" id="pkN"></span></div><div id="packet"></div></div>
             <div class="card">
-              <div class="card-h"><h3>Submission packet</h3><span class="muted small" id="pkCount"></span></div>
-              <div id="packet"></div>
-            </div>
-            <div class="card">
-              <div class="card-h"><h3>Issue decision</h3><span class="pill p-info">Person only</span></div>
+              <div class="card-h"><h3>Issue decision</h3><span class="st info">Person only</span></div>
               <div class="card-b" id="gate">
                 <label class="confirm"><input type="checkbox" id="c1"><span>I read the agent report and its sources.</span></label>
-                <label class="confirm"><input type="checkbox" id="c2"><span>Plan reviewer signed off notes 3 and 5. <span class="muted small">(simulated)</span></span></label>
+                <label class="confirm"><input type="checkbox" id="c2"><span>Plan reviewer signed off notes 3 and 5. <span class="muted">(simulated)</span></span></label>
                 <label class="confirm"><input type="checkbox" id="c3"><span>Site plan S-1 is on file.</span></label>
-                <p class="humanonly" id="gateHint" style="margin:8px 0 12px">🔒 The agent can't press these buttons.</p>
-                <div style="display:flex;flex-direction:column;gap:8px">
-                  <button class="btn primary block" id="issueBtn" disabled>Issue permit</button>
-                  <button class="btn block" id="sendBackBtn">Send back to applicant</button>
-                </div>
+                <p class="small muted" id="gateHint" style="margin:8px 0 10px"></p>
+                <div class="stack" style="gap:8px"><button class="btn primary block" id="issueBtn">Issue permit</button><button class="btn block" id="backBtn">Send back to applicant</button></div>
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      <div id="cp-review" hidden></div>
     </div>
   </div>
 </section>
 
-<!-- ================= INSPECTOR ================= -->
+<!-- ================= INSPECTOR (FIELD) ================= -->
 <section class="view" id="v-insp">
   <div class="shell">
     <aside class="side">
-      <div class="logo">
-        <svg width="30" height="30" viewBox="0 0 34 34" aria-hidden="true"><rect x="2" y="16" width="5" height="16" fill="#f8bd32"/><rect x="9" y="8" width="5" height="24" fill="#f8bd32"/><rect x="16" y="2" width="5" height="30" fill="#f8bd32"/><rect x="23" y="12" width="5" height="20" fill="#f8bd32"/></svg>
-        <div><b>PITTSBURGH</b><span>Inspections</span></div>
-      </div>
+      <div class="logo"><svg width="26" height="26" viewBox="0 0 30 30" aria-hidden="true"><rect x="2" y="14" width="5" height="14" fill="#f8bd32"/><rect x="9" y="6" width="5" height="22" fill="#f8bd32"/><rect x="16" y="10" width="5" height="18" fill="#f8bd32"/><rect x="23" y="17" width="5" height="11" fill="#f8bd32"/></svg><div><b>PITTSBURGH</b><span>Field inspections</span></div></div>
       <div class="sec">Today</div>
-      <button class="nav" aria-current="true"><span>Video inspections</span><span class="cnt" id="iCount">2</span></button>
-      <div class="alerts" id="inspAlerts"><b>Agent alerts</b><span>No alerts yet.</span></div>
-      <div class="user"><span class="av">RI</span><div>Building inspector<br><span style="font-size:12px;color:#9fb0d6"><span class="ph" style="border-color:#9fb0d6">[R. Inspector]</span></span></div></div>
+      <div id="iDay"></div>
+      <div class="foot"><b>Agent</b>Checks every photo. The office decides.<div style="margin-top:10px">Signed in: <span class="ph">[R. Inspector]</span></div></div>
     </aside>
-    <div class="content">
-      <div>
-        <div class="eyebrow">Virtual inspections</div>
-        <h1 class="title">Today's video calls</h1>
-        <p class="muted">Homeowners film the agent's shot list first. You see the evidence before the call.</p>
-      </div>
-      <div class="card" style="overflow-x:auto">
-        <table class="q"><thead><tr><th>Time</th><th>Address</th><th>Work</th><th>Shots</th></tr></thead><tbody id="iBody"></tbody></table>
-      </div>
-      <div id="iDetail" class="stack"></div>
-    </div>
+    <div class="content" id="iContent"></div>
   </div>
 </section>
 
 </main>
-
-<footer class="foot">Student prototype for CMU Design of AI Products &amp; Systems. Not a City of Pittsburgh system. All names, addresses and numbers are simulated; <span class="ph">dotted</span> text is a placeholder.</footer>
+<footer class="foot">Class prototype, CMU Design of AI Products &amp; Systems. All names, addresses, scores, dates and permit numbers are simulated. <span class="ph">[Dotted]</span> means placeholder. Code rules marked "confirm" must be checked against Pittsburgh's adopted code.</footer>
 
 <script>
 (() => {
+'use strict';
 const $ = (s, r=document) => r.querySelector(s);
 const $$ = (s, r=document) => [...r.querySelectorAll(s)];
 const wait = ms => new Promise(r => setTimeout(r, ms));
-const PH = t => `<span class="ph">${t}</span>`;
+const PH = t => `<span class="ph" title="Placeholder">${t}</span>`;
+const fmt = t => t.replace(/\[([^\]]+)\]/g, m => PH(m));
+const THR = 0.80;
 
-/* ---------------- State ---------------- */
-let state;
+/* ======================= STATE ======================= */
 const fresh = () => ({
   view:'app', cpage:'queue',
-  pc:'idle',               // idle | running | issue | fixing | ready | submitted
-  s1:'missing',            // missing | requested | received
-  planSel:null, accepted:false, issued:false, sentBack:false,
-  shot:0, closer:false, shots:[false,false,false,false], slot:null, booked:false, insp:null,
-  msgs:[], seen:{app:0, city:0, insp:0},
+  pc:'idle', s1:'missing', accepted:false, issued:false, sentBack:false,
+  planSel:null, slot:null, booked:false,
+  shot:0, photos:[null,null,null,null], note:'', sent:false, thumbSel:null,
+  revSel:null, verdicts:{}, final:null,
+  msgs:[], unread:{app:0, city:0, insp:0}, clock:0,
 });
-state = fresh();
-
-/* messages: who = app | city | insp */
-function send(who, from, channel, text){
-  state.msgs.push({who, from, channel, text});
-  if (who === 'app') toast(text);
-  renderMsgs(); renderGuide();
-}
-function toast(text){
-  const t = $('#toast'); $('.tx', t).textContent = text;
-  t.classList.add('on'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('on'), 3400);
+let S = fresh();
+const CLOCK = ['Mon 9:12 AM','Mon 9:13 AM','Mon 9:14 AM','Mon 2:40 PM','Mon 3:05 PM','Mon 3:06 PM','Tue 8:00 AM','Tue 8:01 AM','Tue 8:30 AM','Tue 8:31 AM','Thu 9:50 AM','Thu 9:51 AM','Thu 1:15 PM','Thu 1:16 PM'];
+function msg(to, from, ch, text){
+  S.msgs.push({to, from, ch, text, time:CLOCK[Math.min(S.clock++, CLOCK.length-1)], fresh:true});
+  if (S.view !== to) S.unread[to]++;
 }
 
-/* ---------------- Views ---------------- */
-function show(v){
-  state.view = v;
-  $$('.view').forEach(el => el.classList.toggle('on', el.id === 'v-'+v));
-  $$('.roles button').forEach(b => b.setAttribute('aria-selected', b.dataset.view === v));
-  state.seen[v] = state.msgs.filter(m => m.who === v).length;
-  renderMsgs(); renderGuide();
-  try { localStorage.setItem('rc-view', v); } catch(e){}
+/* ======================= STORY GUIDE ======================= */
+const STEPS = [
+  ['app',  'Laurel checks her application, fixes 1 item, and submits.'],
+  ['city', 'The office opens her file. A vision model read the drawings. Ask for the missing site plan.'],
+  ['app',  'Laurel uploads the site plan S-1.'],
+  ['city', 'Accept the file. Only a person can issue the permit.'],
+  ['app',  'Permit issued. Laurel books the site inspection.'],
+  ['insp', 'On site: aim the camera and take 4 photos. The vision model checks each one live.'],
+  ['city', 'The office reviews flagged photos first and signs off.'],
+  [null,   'Done.'],
+];
+function stepNow(){
+  if (S.pc !== 'submitted') return 0;
+  if (S.sentBack) return 7;
+  if (S.s1 === 'missing') return 1;
+  if (S.s1 === 'requested') return 2;
+  if (!S.issued) return 3;
+  if (!S.booked) return 4;
+  if (!S.sent) return 5;
+  if (!S.final) return 6;
+  return 7;
 }
-document.addEventListener('click', e => {
-  const r = e.target.closest('[data-view]'); if (r) show(r.dataset.view);
-  const c = e.target.closest('[data-cpage]'); if (c){ state.cpage = c.dataset.cpage; renderCity(); }
-});
-
-/* ---------------- Guide band ---------------- */
-function guide(){
-  const s = state;
-  if (s.pc !== 'submitted') return [1,'app', s.pc==='idle' ? 'Laurel checks her application before she submits it.' : s.pc==='issue' ? 'The agent found 1 thing to fix. Laurel uploads a corrected certificate.' : 'All clear. Laurel submits it herself.'];
-  if (s.sentBack) return [3,null,'A person sent the file back. Press Reset to try the issue path.'];
-  if (s.s1 === 'missing') return [2,'city','The technician opens Laurel\'s file. The agent flagged a missing site plan.'];
-  if (s.s1 === 'requested') return [2,'app','The city asked for sheet S-1. Laurel uploads it.'];
-  if (!s.accepted) return [3,'city','S-1 is in. The technician accepts the file.'];
-  if (!s.issued) return [3,'city','Only a person can issue. Tick the 3 checks and issue the permit.'];
-  if (s.shot < 4) return [4,'app','Permit issued. Laurel films 4 shots. The agent checks each one.'];
-  if (!s.booked) return [4,'app','All shots pass. Laurel books a video inspection.'];
-  if (!s.insp) return [5,'insp','The inspector reviews the pre-checked shots and decides.'];
-  return [6,'app', s.insp==='pass' ? 'Passed. Laurel gets the close-out steps. Demo done.' : 'Failed. The agent explains the fix to Laurel. Demo done.'];
-}
-const VIEWNAME = {app:'Applicant', city:'City dashboard', insp:'Inspector'};
+const VNAME = {app:'Applicant', city:'City office', insp:'Inspector'};
 function renderGuide(){
-  const [n, v, txt] = guide();
-  $('#gStep').textContent = `Step ${n} of 6`;
-  $('#gTxt').textContent = txt;
+  const n = stepNow(), [v, t] = STEPS[n];
+  $('#gNum').textContent = n < 7 ? `Step ${n+1} of 7` : 'Done';
+  $('#gTxt').textContent = S.sentBack ? 'Sent back by a person. Press Reset to try the issue path.'
+    : S.final ? `Done. The office chose "${S.final==='approve'?'Approve inspection':'Send correction notice'}". Every decision was made by a person.` : t;
   const g = $('#gGo');
-  if (v && v !== state.view){ g.hidden = false; g.textContent = `Go to ${VIEWNAME[v]} →`; g.dataset.view = v; }
-  else { g.hidden = true; delete g.dataset.view; }
+  const wantPage = n === 6 ? 'review' : 'file';
+  const there = v === S.view && (v !== 'city' || S.cpage === wantPage);
+  if (v && !there){ g.hidden = false; g.textContent = `Go to ${VNAME[v]} →`; g.dataset.v = v; } else g.hidden = true;
+  $('#jump').value = '';
 }
-
-/* ================= APPLICANT ================= */
-const PC = [
-  {t:'Standard permit, not EZ', s:'W-3 gets bigger, so drawings are needed.', k:'eye', ic:'i'},
-  {t:'Not historic, floodplain or condemned', s:'Checked against city map layers.', k:'ok', ic:'✓'},
-  {t:'Contractor license is active', s:'Expires in 212 days ' + PH('[sim]') + '.', k:'ok', ic:'✓'},
-  {t:'Drawings uploaded and readable', s:'Sheets A-1 and A-2.', k:'ok', ic:'✓'},
-  {t:'Form complete', s:'Names and address match.', k:'ok', ic:'✓'},
-  {t:'Insurance name doesn\'t match', s:'"Windows LLC" vs. tax record "Window Co LLC".', k:'miss', ic:'!', fix:true},
-];
-function phone(){
-  const s = state, body = $('#phoneBody');
-  // camera stage
-  if (s.issued && s.shot < 4){
-    $('#aStage').textContent = 'Step 2 of 2';
-    body.innerHTML = `<div class="cam"><div class="rec"><i></i>LIVE</div><div class="shotlbl">Shot ${s.shot+1} of 4</div><svg id="camSvg" viewBox="0 0 356 440" preserveAspectRatio="xMidYMid slice"></svg><div class="cam-msg info" id="camMsg"></div></div>
-      <div class="afoot"><div style="font-weight:600">${SHOTS[s.shot].t}</div><div class="progress">${s.shots.map((d,k)=>`<i class="${d?'done':k===s.shot?'cur':''}"></i>`).join('')}</div>
-      <div style="display:flex;gap:8px">${s.shot===2 && !s.closer ? '<button class="btn" id="closerBtn" style="flex:1">Move closer</button>' : ''}<button class="btn gold" id="captureBtn" style="flex:1" ${s.shot===2 && !s.closer ? 'disabled':''}>Capture shot</button></div></div>`;
-    cam();
-    return;
-  }
-  $('#aStage').textContent = s.issued ? 'Step 2 of 2' : 'Step 1 of 2';
-  let main = '', foot = '';
-  if (s.issued && !s.booked){
-    main = `<div class="q">Book your video inspection</div><p class="small muted">All 4 shots passed the agent's check. Pick a time.</p>
-      <div class="slots">${SLOTS.map(x=>`<button class="slot ${s.slot===x?'sel':''}" data-slot="${x}">${x}<small>20 min · video ${PH('[sim]')}</small></button>`).join('')}</div>`;
-    foot = `<button class="btn primary block" id="bookBtn" ${s.slot?'':'disabled'}>Book ${s.slot||'a time'}</button>`;
-  } else if (s.booked && !s.insp){
-    main = `<div class="bigstate"><div class="ico" style="background:var(--sky);color:var(--navy)">📅</div><div class="q">Booked</div><div class="muted">Video inspection ${s.slot}. Your 4 shots are already with the inspector.</div></div>`;
-  } else if (s.insp){
-    main = s.insp==='pass'
-      ? `<div class="bigstate"><div class="ico" style="background:var(--green-lt);color:var(--green)">✓</div><div class="q">Inspection passed</div><div class="muted">Upload 1 close-out document to finish.</div></div>`
-      : `<div class="bigstate"><div class="ico" style="background:var(--red-lt);color:var(--red)">!</div><div class="q">Needs a fix</div><div class="muted">Read the inspector's note in Messages, then book a re-check.</div></div>`;
-    foot = s.insp==='pass' ? '<button class="btn gold block" disabled>Upload close-out document</button>' : '<button class="btn primary block" disabled>Book a re-check</button>';
-  } else if (s.pc === 'submitted'){
-    if (s.s1 === 'requested'){
-      main = `<div class="q">The city needs 1 more sheet</div>
-        <div class="reqcard"><b>Site plan, sheet S-1</b><span class="small">Your drawings list S-1, but it wasn't uploaded.</span><span class="small muted">Asked by the application technician</span></div>`;
-      foot = '<button class="btn gold block" id="upS1">Upload S-1</button>';
-    } else if (s.sentBack){
-      main = `<div class="bigstate"><div class="ico" style="background:var(--red-lt);color:var(--red)">↩</div><div class="q">Sent back</div><div class="muted">See Messages for what staff need.</div></div>`;
-    } else {
-      main = `<div class="bigstate"><div class="ico" style="background:var(--sky);color:var(--navy)">⏳</div><div class="q">In city review</div><div class="muted">Submitted complete. Standard review is 15 to 30 business days. ${s.s1==='received'?'<br><b>S-1 received.</b>':''}</div></div>`;
-    }
-  } else {
-    main = `<div class="q">Is my application ready?</div>
-      <div class="sum"><div><b>Address</b><span>${PH('[1234 Example St]')}</span></div><div><b>Work</b><span>Replace 4 windows, enlarge W-3</span></div><div><b>Uploads</b><span>Form · A-1, A-2 · Insurance</span></div></div>
-      <div id="pcChecks" style="display:flex;flex-direction:column;gap:6px"></div><div id="pcResult"></div>`;
-    const lbl = {idle:'Check my application', issue:'Upload corrected certificate', ready:'Submit application'}[s.pc] || '';
-    foot = `<button class="btn gold block" id="pcBtn">${lbl}</button>`;
-  }
-  body.innerHTML = `<div class="abody">${main}</div>${foot?`<div class="afoot">${foot}</div>`:''}`;
-  if (s.pc === 'issue' || s.pc === 'ready') drawChecks(s.pc === 'ready', true);
-}
-function drawChecks(fixed, instant){
-  const box = $('#pcChecks'); if (!box) return [];
-  box.innerHTML = PC.map(c => {
-    const f = fixed && c.fix;
-    return `<div class="chk ${c.fix && !f ? 'fix':''} ${instant?'show':''}"><span class="ic ${f?'ok':c.k}" style="width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700">${f?'✓':c.ic}</span><div><div style="font-weight:600">${f?'Insurance name matches':c.t}</div><div class="s">${f?'New certificate: "Three Rivers Window Co LLC".':c.s}</div></div></div>`;
-  }).join('');
-  $('#pcResult').innerHTML = !instant ? '' : fixed
-    ? '<div class="result ok">Ready to submit</div><div class="small muted">Ready means complete. City staff still review and decide.</div>'
-    : '<div class="result miss">1 thing to fix</div><div class="small muted">Ask your contractor for a corrected insurance certificate.</div>';
-  return $$('.chk', box);
-}
-async function runCheck(fixed){
-  const btn = $('#pcBtn'); btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Checking…';
-  for (const el of drawChecks(fixed, false)){ await wait(fixed ? 140 : 360); el.classList.add('show'); }
-  await wait(250);
-  state.pc = fixed ? 'ready' : 'issue';
-  if (!fixed) send('app','Ready-Check','App','1 thing to fix: your insurance name doesn\'t match your tax record.');
-  phone(); renderApp(); renderGuide();
-}
-document.addEventListener('click', async e => {
-  const t = e.target;
-  if (t.closest('#pcBtn')){
-    if (state.pc === 'idle'){ state.pc = 'running'; return runCheck(false); }
-    if (state.pc === 'issue'){
-      state.pc = 'fixing'; const b = $('#pcBtn'); b.disabled = true; b.innerHTML = '<span class="spinner"></span> Uploading certificate.pdf…';
-      await wait(800); return runCheck(true);
-    }
-    if (state.pc === 'ready'){
-      state.pc = 'submitted';
-      send('app','Ready-Check','App','Submitted complete on the first try. I\'ll tell you when the city responds.');
-      send('city','Ready-Check','Dashboard','New file: [1234 Example St], windows. 1 sheet missing (S-1).');
-      renderAll();
-    }
-  }
-  if (t.closest('#upS1')){
-    state.s1 = 'received';
-    send('city','Ready-Check','Dashboard','S-1 received for [1234 Example St]. All 3 sheets on file.');
-    send('app','Ready-Check','App','Got it. S-1 is with the technician.');
-    renderAll();
-  }
-  const sl = t.closest('[data-slot]');
-  if (sl && !state.booked){ state.slot = sl.dataset.slot; phone(); }
-  if (t.closest('#bookBtn') && state.slot){
-    state.booked = true;
-    send('app','Ready-Check','Text',`Booked: video inspection ${state.slot}. I'll remind you the night before.`);
-    send('insp','Ready-Check','Calendar',`New video inspection ${state.slot}: [1234 Example St]. 4 shots pre-checked.`);
-    renderAll();
-  }
-  if (t.closest('#captureBtn')){
-    state.shots[state.shot] = true; state.shot++;
-    if (state.shot === 4) send('app','Ready-Check','App','All 4 shots look good. Pick an inspection time.');
-    phone(); renderApp(); renderGuide();
-  }
-  if (t.closest('#closerBtn')){ state.closer = true; phone(); }
+$('#gGo').addEventListener('click', e => {
+  const v = e.currentTarget.dataset.v;
+  if (v === 'city') S.cpage = stepNow() === 6 ? 'review' : 'file';
+  go(v);
 });
+$('#jump').innerHTML = '<option value="">Jump to step…</option>' + STEPS.slice(0,7).map((s,i)=>`<option value="${i}">${i+1}. ${s[1].split('.')[0]}</option>`).join('');
+$('#jump').addEventListener('change', e => { if (e.target.value !== '') fastForward(+e.target.value); });
+$('#reset').addEventListener('click', () => { hardReset(); go('app'); });
+function hardReset(){ Field.detach(); $('#iContent').innerHTML = ''; S = fresh(); $$('#gate input').forEach(i => i.checked = false); }
 
-const SLOTS = ['Mon 10:00 AM','Mon 1:30 PM','Tue 9:00 AM','Tue 3:00 PM'];
-function renderApp(){
-  const s = state;
-  const steps = [
-    ['Check before submitting', 'Agent checks 6 things.', s.pc==='submitted'],
-    ['City review', s.s1==='requested' ? 'City asked for sheet S-1.' : 'A technician reviews the file.', s.issued],
-    ['Permit issued', 'Issued by a person.', s.issued],
-    ['Site check', 'Film 4 shots. The agent checks them.', s.shot>=4],
-    ['Video inspection', s.booked ? s.slot : 'Book a time.', !!s.insp],
-  ];
-  const cur = steps.findIndex(x => !x[2]);
-  $('#aSteps').innerHTML = steps.map((x,i) => `<li class="${x[2]?'done':i===cur?'cur':''}"><span class="b">${x[2]?'✓':i+1}</span><div><div class="t">${x[0]}</div><div class="s">${x[1]}</div></div></li>`).join('');
-  const pill = $('#aPill');
-  const [cls, txt] = s.insp==='pass' ? ['p-ok','Passed'] : s.insp ? ['p-miss','Needs a fix'] : s.sentBack ? ['p-miss','Sent back'] : s.issued ? ['p-ok','Permit issued'] : s.s1==='requested' ? ['p-eye','Action needed'] : s.pc==='submitted' ? ['p-info','In review'] : ['p-wait','Not submitted'];
-  pill.className = 'pill ' + cls; pill.textContent = txt;
+function fastForward(n){
+  hardReset();
+  if (n >= 1){ S.pc = 'submitted'; msg('app','Ready-Check','App','Submitted, complete on the first try.'); }
+  if (n >= 2){ S.s1 = 'requested'; msg('app','City of Pittsburgh','Email','Please upload sheet S-1 (site plan). It is listed on your drawings but missing.'); }
+  if (n >= 3){ S.s1 = 'received'; }
+  if (n >= 4){ S.accepted = true; S.issued = true; msg('app','City of Pittsburgh','Text','Permit issued. Book your site inspection when the windows are in.'); }
+  if (n >= 5){ S.slot = SLOTS[0]; S.booked = true; msg('app','Ready-Check','Text',`Booked: ${SLOTS[0]}. Have window W-3 open and reachable.`); }
+  if (n >= 6){ demoPhotos(); S.sent = true; }
+  S.unread = {app:0, city:0, insp:0};
+  const v = STEPS[n][0] || 'app';
+  if (v === 'city') S.cpage = n === 6 ? 'review' : 'file';
+  go(v);
 }
 
-/* camera */
-const SHOTS = [
-  {t:'Outside of W-3, whole frame', aim:'Point at the outside of window W-3.'},
-  {t:'Inside: sealant and trim', aim:'Now the inside edge, where frame meets wall.'},
-  {t:'Manufacturer label', aim:'Find the sticker on the glass or frame.'},
-  {t:'Opening width with a tape', aim:'Stretch a tape across the open sash.'},
+/* ======================= VIEWS ======================= */
+function go(v){
+  S.view = v; S.unread[v] = 0;
+  $$('.roles button').forEach(b => b.setAttribute('aria-selected', b.dataset.view === v));
+  $$('.view').forEach(el => el.classList.toggle('on', el.id === 'v-' + v));
+  render();
+  window.scrollTo({top:0});
+}
+$$('.roles button').forEach(b => b.addEventListener('click', () => go(b.dataset.view)));
+function render(){
+  renderApp(); renderCity(); renderInsp(); renderGuide();
+  for (const v of ['app','city','insp']){ const el = $('#n-'+v); el.hidden = !S.unread[v]; el.textContent = S.unread[v]; }
+}
+
+/* ======================= APPLICANT ======================= */
+const CHECKS = [
+  ['info','Standard permit, not EZ','W-3 gets bigger, so drawings are needed.','Standard Permit Application Requirements Guideline [section]'],
+  ['ok','Not historic, floodplain or condemned','','City map layers [simulated]'],
+  ['ok','Contractor license active','','City contractor license records'],
+  ['ok','Drawings uploaded and readable','Sheets A-1 and A-2.','Document AI'],
+  ['ok','Form complete','Names and address match.','Document AI + rules'],
+  ['miss','Insurance name doesn\'t match','Certificate says "Windows LLC". Tax record says "Window Co LLC".','City licensing rules, certificate of insurance', true],
 ];
-const conf = b => (b + (Math.random()-.5)*0.02).toFixed(2);
-function windowScene(){
-  return `<rect width="356" height="440" fill="#3B4552"/><rect x="0" y="330" width="356" height="110" fill="#2C333D"/>
-  <rect x="70" y="60" width="216" height="260" fill="#8FB0D3" stroke="#E9E4DA" stroke-width="12"/><rect x="82" y="72" width="192" height="236" fill="#A9C4E0"/>
-  <line x1="178" y1="66" x2="178" y2="314" stroke="#E9E4DA" stroke-width="8"/><line x1="76" y1="190" x2="280" y2="190" stroke="#E9E4DA" stroke-width="8"/>
-  <path d="M100 90 L150 80 L120 140 Z" fill="#fff" opacity=".18"/>`;
-}
-const tag = (x,y,w,txt,col) => `<rect x="${x}" y="${y}" width="${w}" height="20" rx="3" fill="${col}"/><text x="${x+6}" y="${y+15}" font-family="Outfit, sans-serif" font-size="13" font-weight="600" fill="#1f1f1f">${txt}</text>`;
-function shotSvg(i, closer){
-  const G = '#3fb673', Y = '#f8bd32';
-  if (i === 0) return [windowScene() + `<g class="bbox"><rect x="56" y="46" width="244" height="288" fill="none" stroke="${G}" stroke-width="3"/>${tag(56,24,170,`window frame ${conf(.96)}`,G)}</g><g class="bbox b2"><rect x="62" y="300" width="232" height="30" fill="none" stroke="${G}" stroke-width="2.5" stroke-dasharray="7 5"/>${tag(62,334,100,`trim ${conf(.91)}`,G)}</g>`, ['ok','Whole frame in view. Capture now.']];
-  if (i === 1) return [`<rect width="356" height="440" fill="#D9D2C5"/><rect x="40" y="0" width="190" height="440" fill="#E9E4DA"/><rect x="60" y="0" width="150" height="440" fill="#A9C4E0"/><rect x="226" y="0" width="16" height="440" fill="#F5F2EC"/><rect x="242" y="0" width="114" height="440" fill="#CFC6B6"/>
-      <g class="bbox"><rect x="218" y="40" width="32" height="360" fill="none" stroke="${G}" stroke-width="3"/>${tag(150,16,180,`sealant edge ${conf(.88)}`,G)}</g>`, ['ok','Sealant bead continuous. No gaps.']];
-  if (i === 2){
-    let b = `<defs><filter id="bl${closer?1:0}"><feGaussianBlur stdDeviation="${closer?0:2.2}"/></filter></defs><g class="zoomable" style="transform-origin:236px 250px;transform:scale(${closer?2.3:1})">${windowScene()}<g filter="url(#bl${closer?1:0})"><rect x="206" y="232" width="60" height="38" fill="#F7F5F0"/><rect x="210" y="236" width="52" height="6" fill="#233b77"/><text x="212" y="252" font-family="monospace" font-size="7" fill="#1f1f1f">U-FACTOR 0.27</text><text x="212" y="262" font-family="monospace" font-size="7" fill="#1f1f1f">SHGC 0.30</text></g></g>`;
-    if (!closer) return [b + `<g class="bbox"><rect x="198" y="224" width="76" height="54" fill="none" stroke="${Y}" stroke-width="3"/>${tag(140,282,180,`label · blurry ${conf(.42)}`,Y)}</g>`, ['warn','Label found, but the text is blurry. Move closer.']];
-    return [b + `<g class="bbox"><rect x="158" y="198" width="156" height="108" fill="none" stroke="${G}" stroke-width="3"/>${tag(140,176,190,`label · readable ${conf(.94)}`,G)}</g><rect x="30" y="330" width="296" height="32" rx="4" fill="#1f1f1f" opacity=".85"/><text x="42" y="351" font-family="Outfit, sans-serif" font-size="14" fill="#fff">Read: U-factor 0.27 · SHGC 0.30</text>`, ['ok','Label readable. Capture now.']];
-  }
-  return [windowScene() + `<rect x="84" y="196" width="188" height="14" fill="${Y}"/><g class="bbox"><rect x="78" y="188" width="200" height="30" fill="none" stroke="${G}" stroke-width="3"/>${tag(78,166,160,`tape measure ${conf(.90)}`,G)}</g><rect x="20" y="300" width="316" height="34" rx="4" fill="#1f1f1f" opacity=".8"/><text x="32" y="322" font-family="Outfit, sans-serif" font-size="14" fill="#fff">Read: opening ≈ [24 in] wide</text>`, ['ok','Tape is readable. Capture now.']];
-}
-function cam(){
-  const svg = $('#camSvg'); if (!svg) return;
-  const [b, m] = shotSvg(state.shot, state.closer);
-  svg.innerHTML = b;
-  const el = $('#camMsg'); el.className = 'cam-msg ' + m[0]; el.textContent = m[1];
-}
-setInterval(() => { if (state.view==='app' && state.issued && state.shot<4) cam(); }, 900);
-
-function renderMsgs(){
-  const box = $('#aInbox');
-  const mine = state.msgs.filter(m => m.who==='app');
-  box.innerHTML = mine.length ? [...mine].reverse().map(m => `<div class="m"><div class="meta"><b>${m.from}</b><span>· ${m.channel}</span></div><div>${m.text.replace(/\[(.+?)\]/g, (x)=>PH(x))}</div></div>`).join('') : '<div class="empty">No messages yet.</div>';
-  for (const [who, el] of [['city','#cityAlerts'],['insp','#inspAlerts']]){
-    const list = state.msgs.filter(m => m.who===who).slice(-3).reverse();
-    $(el).innerHTML = '<b>Agent alerts</b>' + (list.length ? list.map(m => `<span>${m.text}</span>`).join('') : '<span>No alerts yet.</span>');
-  }
-  for (const [v,id] of [['app','#nApp'],['city','#nCity'],['insp','#nInsp']]){
-    if (state.view === v) state.seen[v] = state.msgs.filter(m => m.who===v).length;
-    const n = state.msgs.filter(m => m.who===v).length - state.seen[v];
-    const el = $(id); el.hidden = n <= 0; el.textContent = n;
-  }
-}
-
-/* ================= CITY DASHBOARD ================= */
-const QUEUE = [
-  {id:'oak', addr:'[Oak Ave]', work:'Roofing', days:'3', sort:['p-miss','Needs info']},
-  {id:'elm', addr:'[Elm St]', work:'Siding', days:'3', sort:['p-eye','Human check']},
-  {id:'pine', addr:'[Pine Way]', work:'Deck, 1 scope', days:'2', sort:['p-ok','Ready']},
-];
-function laurelSort(){
-  const s = state;
-  if (s.sentBack) return ['p-miss','Sent back'];
-  if (s.issued) return ['p-ok','Issued'];
-  if (s.accepted) return ['p-ok','Ready to issue'];
-  if (s.s1 === 'requested') return ['p-wait','Waiting on applicant'];
-  if (s.s1 === 'received') return ['p-ok','Complete'];
-  return ['p-miss','Needs info'];
-}
-const PINS = [
-  {id:1, x:1010, y:420, st:'ok', t:'Title block matches the application', who:'Technician', why:'Owner name and address on the drawing match the form.', model:'Document AI'},
-  {id:2, x:1010, y:545, st:'ok', t:'Scale found, plan is measurable', who:'Technician', why:'1/4in = 1ft, checked against the 24\'-0" dimension.', model:'Vision model'},
-  {id:3, x:720, y:170, st:'eye', t:'W-3 bigger opening has no size', who:'Plan reviewer', why:'W-1, W-2 and W-4 show 30x48. W-3 has no width or height. Bedroom windows must meet the emergency escape rule.', model:'Vision model · confidence 0.71 (below 0.80 goes to a person)'},
-  {id:4, x:1010, y:174, st:'miss', t:'Site plan S-1 listed but not uploaded', who:'Technician', why:'The sheet index lists S-1. Only A-1 and A-2 were uploaded.', model:'Document AI + rules'},
-  {id:5, x:676, y:300, st:'eye', t:'New header over W-3 has no size', who:'Plan reviewer', why:'Structural. The agent can\'t judge it, so a person decides.', model:'Vision model · confidence 0.58'},
-];
-const PINCOL = {ok:'#3fb673', miss:'#e05a47', eye:'#f8bd32'};
-const PILL = {ok:['p-ok','OK'], miss:['p-miss','Missing'], eye:['p-eye','Needs a person']};
-function pinState(p){
-  if (p.id !== 4) return p.st;
-  return state.s1 === 'received' ? 'ok' : 'miss';
-}
-function renderCity(){
-  const s = state;
-  // nav
-  $('#navFile').hidden = s.pc !== 'submitted';
-  if (s.pc !== 'submitted') s.cpage = 'queue';
-  $$('#v-city .nav[data-cpage]').forEach(b => b.setAttribute('aria-current', b.dataset.cpage === s.cpage));
-  $('#qCount').textContent = QUEUE.length + (s.pc==='submitted' ? 1 : 0);
-  $('#cQueue').hidden = s.cpage !== 'queue';
-  $('#cFile').hidden = s.cpage !== 'file';
-  // queue
-  const lr = s.pc === 'submitted'
-    ? `<tr class="click" data-cpage="file"><td><b>${PH('[1234 Example St]')}</b> <span class="pill p-info" style="margin-left:6px">New</span></td><td>Windows, W-3 bigger</td><td>0</td><td><span class="pill ${laurelSort()[0]}">${laurelSort()[1]}</span></td></tr>`
-    : `<tr class="dim"><td colspan="4">Laurel hasn't submitted yet. Start in the Applicant view.</td></tr>`;
-  $('#qBody').innerHTML = lr + QUEUE.map(q => `<tr><td>${PH(q.addr)}</td><td>${q.work}</td><td>${q.days}</td><td><span class="pill ${q.sort[0]}">${q.sort[1]}</span></td></tr>`).join('');
-  if (s.cpage !== 'file') return;
-  // stepper (adapted from Make: Submit / Review / Contractor / Inspections / Complete)
-  const stages = ['Submit','Review','Issue','Inspection','Complete'];
-  const at = s.insp ? 4 : s.issued ? 3 : s.accepted ? 2 : 1;
-  $('#cStepper').innerHTML = stages.map((x,i) => `<div class="${i<at?'done':i===at?'cur':''}"><small>0${i+1}</small>${i<at?'✓ ':''}${x}</div>`).join('');
-  // recommendation
-  let rec;
-  if (s.sentBack) rec = ['', 'Sent back', 'Sent back by a person', 'The agent explains the request to Laurel in plain words.'];
-  else if (s.issued) rec = ['good','Done', 'Permit issued by a person', 'The agent now guides Laurel through the site check.'];
-  else if (s.accepted) rec = ['good','Next step', 'Ready for your decision', 'All sheets on file. Notes 3 and 5 went to the plan reviewer.'];
-  else if (s.s1 === 'received') rec = ['good','Agent recommendation', 'Packet complete. Accept the file.', 'S-1 arrived. The agent re-read the sheet index: all 3 sheets on file.'];
-  else if (s.s1 === 'requested') rec = ['', 'Waiting', 'Waiting for Laurel to upload S-1', 'The agent sent her a plain-language request.'];
-  else rec = ['', 'Agent recommendation', 'Ask Laurel for the site plan', 'Sheet S-1 is listed on the drawings but missing. 2 notes need a plan reviewer.'];
-  const recBtn = (!s.accepted && !s.sentBack) ? (s.s1==='missing' ? '<button class="btn primary sm" id="reqS1">Request S-1</button>' : s.s1==='received' ? '<button class="btn primary sm" id="acceptBtn">Accept file</button>' : '') : '';
-  const r = $('#cRec'); r.className = 'rec ' + rec[0];
-  r.innerHTML = `<div style="flex:1"><div class="lbl">${rec[1]}</div><h3>${rec[2]}</h3><p>${rec[3]}</p><p class="small" style="margin-top:4px">A recommendation, not a decision.</p></div><div style="align-self:center">${recBtn}</div>`;
-  // pins + list
-  $('#pins').innerHTML = PINS.map(p => `<g class="pin ${s.planSel===p.id?'sel':''}" data-pin="${p.id}" tabindex="0" role="button" aria-label="Finding ${p.id}"><circle cx="${p.x}" cy="${p.y}" r="20" fill="${PINCOL[pinState(p)]}" stroke="#1a2c5a" stroke-width="3"/><text x="${p.x}" y="${p.y+8}" font-family="Outfit, sans-serif" font-size="22" font-weight="700" fill="#1f1f1f" text-anchor="middle" pointer-events="none">${p.id}</text></g>`).join('');
-  $('#planList').innerHTML = PINS.map(p => {
-    const st = pinState(p); let [c, l] = PILL[st];
-    if (p.id===4 && s.s1==='requested'){ c='p-wait'; l='Requested'; }
-    if (p.id===4 && s.s1==='received') l='Received';
-    return `<div class="rowi click ${s.planSel===p.id?'sel':''}" data-pin="${p.id}"><span class="ic ${st}">${p.id}</span><div><div class="t">${p.t}</div><div class="src">To: ${p.who}</div></div><span class="pill ${c}">${l}</span></div>`;
+const SLOTS = ['Thu 9-11 AM','Thu 1-3 PM','Fri 9-11 AM','Fri 1-3 PM'];
+const ST_WORD = {ok:'OK', miss:'Fix', info:'Info', flag:'Check', wait:'Waiting'};
+function checkRows(fixed){
+  return CHECKS.map((c,i) => {
+    const f = fixed && c[4], k = f ? 'ok' : c[0], sub = f ? 'New certificate uploaded.' : c[2];
+    return `<div class="row hidden"><span class="k">${String(i+1).padStart(2,'0')}</span><div><div class="t">${f?'Insurance name matches':c[1]}</div>${sub?`<div class="s">${sub}</div>`:''}<div class="s">${fmt(c[3])}</div></div><span class="st ${k}">${f?'Fixed':ST_WORD[k]}</span></div>`;
   }).join('');
-  const p = PINS.find(x => x.id === s.planSel);
-  $('#planDetail').innerHTML = p ? `<b>${p.id}. ${p.t}</b><span>${p.why}</span><span class="small muted">${p.model} · goes to ${p.who.toLowerCase()}</span>` : '<span class="muted">Pick a finding to see why the agent flagged it and who it goes to.</span>';
-  // packet
-  const docs = [
-    ['Application form','3 pages','p-ok','Read'],
-    ['Drawings A-1, A-2','Floor plan, elevations','p-ok','Read'],
-    ['Site plan S-1', s.s1==='received'?'Uploaded by Laurel':'Listed, not uploaded', s.s1==='received'?'p-ok':s.s1==='requested'?'p-wait':'p-miss', s.s1==='received'?'Read':s.s1==='requested'?'Requested':'Missing'],
-    ['Insurance certificate','Name matches tax record','p-ok','Read'],
-  ];
-  $('#packet').innerHTML = docs.map(d => `<div class="doc"><span class="f">PDF</span><div><div style="font-weight:600">${d[0]}</div><div class="small muted">${d[1]}</div></div><span class="pill ${d[2]}">${d[3]}</span></div>`).join('');
-  $('#pkCount').textContent = `${docs.filter(d=>d[2]==='p-ok').length} of 4`;
+}
+function renderApp(){
+  const m = $('#appMain');
+  if (S.pc !== 'submitted'){
+    const head = {
+      idle:`<h2>Is my application ready?</h2><p class="muted small">Ready-Check compares your form and files to the City's checklist and names the rule behind each flag.</p>`,
+      running:`<h2>Checking…</h2>`,
+      issue:`<h2 class="result miss">1 item to fix</h2><p class="muted small">Ask your contractor for a corrected certificate.</p>`,
+      fixing:`<h2>Checking the new certificate…</h2>`,
+      ready:`<h2 class="result ok">Ready to submit</h2><p class="muted small">Ready means complete. City staff still review and decide.</p>`,
+    }[S.pc];
+    const btn = {idle:['gold','Check my application'], running:['gold','<span class="spinner"></span> Checking'], issue:['primary','Upload corrected certificate'], fixing:['primary','<span class="spinner"></span> Uploading'], ready:['gold','Submit application']}[S.pc];
+    m.innerHTML = `<div class="card-b">${head}</div>
+      <table class="kv"><tr><td>Address</td><td>${PH('[1234 Example St]')}, Pittsburgh</td></tr><tr><td>Work</td><td>Replace 4 windows. Enlarge bedroom window W-3.</td></tr><tr><td>Contractor</td><td>${PH('[Three Rivers Window Co.]')}</td></tr><tr><td>Files</td><td>Application form · Drawings A-1, A-2 · Insurance certificate</td></tr></table>
+      <div id="checks">${S.pc==='idle'?'':checkRows(S.pc==='ready')}</div>
+      <div class="card-b"><button class="btn ${btn[0]}" id="pcBtn" ${S.pc==='running'||S.pc==='fixing'?'disabled':''}>${btn[1]}</button></div>`;
+    if (S.pc==='issue' || S.pc==='ready') $$('#checks .row').forEach(r => r.classList.remove('hidden'));
+    $('#pcBtn').addEventListener('click', pcAction);
+  } else if (S.sentBack){
+    m.innerHTML = `<div class="card-b"><h2 class="result miss">Sent back</h2><p class="muted">Staff need more from you. See Messages.</p></div>`;
+  } else if (S.s1 === 'requested'){
+    m.innerHTML = `<div class="card-b"><h2>The City needs 1 more sheet</h2></div><table class="kv"><tr><td>Sheet</td><td>S-1, site plan</td></tr><tr><td>Why</td><td>Your drawings list S-1, but it wasn't uploaded.</td></tr><tr><td>Asked by</td><td>Application technician</td></tr></table><div class="card-b"><button class="btn gold" id="upS1">Upload S-1</button></div>`;
+    $('#upS1').addEventListener('click', async e => {
+      e.currentTarget.disabled = true; e.currentTarget.innerHTML = '<span class="spinner"></span> Uploading';
+      await wait(700);
+      S.s1 = 'received';
+      msg('app','Ready-Check','App','Got it. S-1 is with the technician.');
+      msg('city','Ready-Check','Queue','Laurel uploaded S-1. All 3 sheets on file.');
+      render();
+    });
+  } else if (!S.issued){
+    m.innerHTML = `<div class="card-b"><h2>In review</h2><p class="muted">Your file went in complete. Standard review takes 15 to 30 business days.</p></div>`;
+  } else if (!S.booked){
+    m.innerHTML = `<div class="card-b stack"><div><h2>Book your site inspection</h2><p class="muted small">An inspector visits and photographs the new windows. Pick a time window.</p></div>
+      <div class="slots">${SLOTS.map(x => `<button class="slot ${S.slot===x?'sel':''}" data-slot="${x}"><b>${x}</b><span>on site ${PH('[sim]')}</span></button>`).join('')}</div>
+      <div><button class="btn primary" id="bookBtn" ${S.slot?'':'disabled'}>Book ${S.slot||''}</button></div></div>`;
+    $$('.slot', m).forEach(b => b.addEventListener('click', () => { S.slot = b.dataset.slot; renderApp(); }));
+    $('#bookBtn').addEventListener('click', () => {
+      S.booked = true;
+      msg('app','Ready-Check','Text',`Booked: ${S.slot}. Have window W-3 open and reachable, with a clear path to it.`);
+      msg('insp','Ready-Check','Calendar',`New visit ${S.slot}: [1234 Example St], window W-3. Shot list ready.`);
+      render();
+    });
+  } else if (!S.final){
+    m.innerHTML = `<div class="card-b"><h2>Inspection ${S.sent?'in office review':'booked'}</h2><p class="muted">${S.sent?'The inspector sent the photos to the office. A person reviews them.':`${S.slot}. The inspector will photograph window W-3.`}</p></div>`;
+  } else {
+    m.innerHTML = S.final === 'approve'
+      ? `<div class="card-b"><h2 class="result ok">Inspection approved</h2><p class="muted">Upload 1 close-out document to finish.</p></div>`
+      : `<div class="card-b"><h2 class="result miss">Correction needed</h2><p class="muted">See the note in Messages, then book a re-check.</p></div>`;
+  }
+  const steps = [['Check and submit', S.pc==='submitted'], ['City review', S.issued], ['Permit issued', S.issued], ['Site inspection', S.sent], ['Office sign-off', !!S.final]];
+  const cur = steps.findIndex(x => !x[1]);
+  $('#appSteps').innerHTML = steps.map((x,i) => `<li class="${x[1]?'done':i===cur?'cur':''}"><span class="b">${x[1]?'✓':i+1}</span><div class="t">${x[0]}</div></li>`).join('');
+  $('#appSt').textContent = S.final ? (S.final==='approve'?'Approved':'Correction') : S.sent ? 'In review' : S.booked ? 'Booked' : S.issued ? 'Issued' : S.pc==='submitted' ? 'Submitted' : 'Draft';
+  const mine = S.msgs.filter(x => x.to === 'app').slice().reverse();
+  $('#inbox').innerHTML = mine.length ? mine.map(x => `<div class="m ${x.fresh?'new':''}"><div class="meta">${x.from} · ${x.ch} · ${x.time} ${PH('[sim]')}</div>${fmt(x.text)}</div>`).join('') : '<div class="empty">Nothing yet.</div>';
+  if (S.view === 'app') setTimeout(() => S.msgs.forEach(x => { if (x.to==='app') x.fresh = false; }), 2000);
+}
+async function pcAction(){
+  if (S.pc === 'idle' || S.pc === 'issue'){
+    const re = S.pc === 'issue';
+    if (re){ S.pc = 'fixing'; renderApp(); await wait(700); }
+    S.pc = 'running'; renderApp();
+    $('#checks').innerHTML = checkRows(re);
+    for (const r of $$('#checks .row')){ await wait(re ? 120 : 330); r.classList.remove('hidden'); }
+    await wait(200);
+    S.pc = re ? 'ready' : 'issue';
+    if (!re) msg('app','Ready-Check','App','Your insurance name doesn\'t match your tax record. Fix it before you submit.');
+    render(); return;
+  }
+  if (S.pc === 'ready'){
+    S.pc = 'submitted';
+    msg('app','Ready-Check','App','Submitted, complete on the first try.');
+    msg('city','Ready-Check','Queue','New file: [1234 Example St]. Drawings read, 5 findings, 1 sheet missing.');
+    render();
+  }
+}
+
+/* ======================= CITY OFFICE ======================= */
+const QUEUE = [['[Oak Ave]','Roofing',3,'miss','Needs info'],['[Elm St]','Siding',3,'flag','Human check'],['[Pine Way]','Deck, 1 scope',2,'ok','Ready']];
+const PINS = [
+  {id:1,x:1010,y:420,st:'ok',t:'Title block matches the application',to:'Technician',why:'Owner and address on the drawing match the form.',m:'Document AI · 0.98'},
+  {id:2,x:1010,y:545,st:'ok',t:'Scale found, plan is measurable',to:'Technician',why:'1/4in = 1ft, checked against the 24\'-0" dimension.',m:'Vision model · 0.95'},
+  {id:3,x:720,y:170,st:'flag',t:'W-3 bigger opening has no size',to:'Plan reviewer',why:'W-1, W-2, W-4 show 30x48. W-3 has none. Bedroom windows must meet the emergency escape rule.',m:'Vision model · 0.71, under 0.80 so a person checks'},
+  {id:4,x:1010,y:174,st:'miss',t:'Site plan S-1 listed, not uploaded',to:'Technician',why:'The sheet index lists S-1. Only A-1 and A-2 were uploaded.',m:'Document AI + rules'},
+  {id:5,x:676,y:300,st:'flag',t:'New header over W-3 has no size',to:'Plan reviewer',why:'Structural. The agent never clears this. A person decides.',m:'Vision model · 0.58'},
+];
+const PINCOL = {ok:'#3fb673', miss:'#e05a47', flag:'#f8bd32'};
+const pinSt = p => p.id === 4 && S.s1 === 'received' ? 'ok' : p.st;
+function laurelSort(){
+  if (S.final) return ['ok', S.final==='approve' ? 'Inspection approved' : 'Correction sent'];
+  if (S.sent) return ['flag','Inspection to review'];
+  if (S.issued) return ['ok','Issued'];
+  if (S.sentBack) return ['miss','Sent back'];
+  if (S.s1 !== 'received') return ['miss','Needs info'];
+  return ['ok','Ready'];
+}
+$$('#v-city [data-cpage]').forEach(b => b.addEventListener('click', () => { S.cpage = b.dataset.cpage; renderCity(); renderGuide(); }));
+function renderCity(){
+  const sub = S.pc === 'submitted';
+  if (!sub && S.cpage === 'file') S.cpage = 'queue';
+  $$('#v-city .nav').forEach(b => b.setAttribute('aria-current', b.dataset.cpage === S.cpage));
+  $('#cFileSec').hidden = $('#cFileNav').hidden = !sub;
+  $('#cQn').textContent = QUEUE.length + (sub ? 1 : 0);
+  $('#cRn').textContent = S.sent && !S.final ? '1' : '0';
+  ['queue','file','review'].forEach(p => $('#cp-'+p).hidden = S.cpage !== p);
+  const last = S.msgs.filter(x => x.to === 'city').slice(-1)[0];
+  $('#cAlert').innerHTML = last ? fmt(last.text) : 'Sorts and flags. Never approves.';
+  const ls = laurelSort();
+  $('#qBody').innerHTML = (sub
+    ? `<tr class="click" data-open="${S.sent && !S.final ? 'review' : 'file'}"><td><b>${PH('[1234 Example St]')}</b></td><td>Windows, W-3 bigger</td><td>0</td><td><span class="st ${ls[0]}">${ls[1]}</span></td></tr>`
+    : `<tr class="dim"><td colspan="4">Laurel hasn't submitted yet. Start in the Applicant view.</td></tr>`)
+    + QUEUE.map(q => `<tr><td>${PH(q[0])}</td><td>${q[1]}</td><td>${q[2]}</td><td><span class="st ${q[3]}">${q[4]}</span></td></tr>`).join('');
+  $$('#qBody tr[data-open]').forEach(tr => tr.addEventListener('click', () => { S.cpage = tr.dataset.open; renderCity(); renderGuide(); }));
+  if (S.cpage === 'file') renderFile();
+  if (S.cpage === 'review') renderReview();
+}
+function renderFile(){
+  const at = S.issued ? 3 : S.accepted ? 2 : 1;
+  $('#fStepper').innerHTML = ['Submit','Review','Issue','Inspection','Complete'].map((x,i) => `<div class="${i<at?'done':i===at?'cur':''}"><small>0${i+1}</small>${i<at?'✓ ':''}${x}</div>`).join('');
+  let r;
+  if (S.sentBack) r = ['', 'Done', 'Sent back by a person', 'The agent explains the request to Laurel.', ''];
+  else if (S.issued) r = ['good','Done','Permit issued by a person','The agent helps Laurel book the site inspection.', ''];
+  else if (S.accepted) r = ['good','Next','Ready for your decision','Notes 3 and 5 went to the plan reviewer.', ''];
+  else if (S.s1 === 'received') r = ['good','Agent recommendation','Packet complete. Accept the file.','All 3 sheets on file. Notes 3 and 5 go to the plan reviewer.', '<button class="btn primary" id="acceptBtn">Accept file</button>'];
+  else if (S.s1 === 'requested') r = ['','Waiting','Waiting for Laurel to upload S-1','She got a plain-language request.', ''];
+  else r = ['','Agent recommendation','Ask Laurel for the site plan','Sheet S-1 is listed on the drawings but missing. 2 notes need a plan reviewer.', '<button class="btn primary" id="reqS1">Request S-1</button>'];
+  const rec = $('#fRec'); rec.className = 'rec ' + r[0];
+  rec.innerHTML = `<div><div class="lbl">${r[1]}</div><h2>${r[2]}</h2><p>${r[3]} A recommendation, not a decision.</p></div><div>${r[4]}</div>`;
+  const rq = $('#reqS1'); if (rq) rq.addEventListener('click', () => {
+    S.s1 = 'requested'; S.planSel = 4;
+    msg('app','City of Pittsburgh','Email','Please upload sheet S-1 (site plan). It is listed on your drawings but missing.');
+    render();
+  });
+  const ac = $('#acceptBtn'); if (ac) ac.addEventListener('click', () => { S.accepted = true; render(); });
+  $('#pins').innerHTML = PINS.map(p => `<g class="pin ${S.planSel===p.id?'sel':''}" data-pin="${p.id}" role="button" tabindex="0" aria-label="Finding ${p.id}"><circle cx="${p.x}" cy="${p.y}" r="${S.planSel===p.id?23:19}" fill="${PINCOL[pinSt(p)]}" stroke="#1a2c5a" stroke-width="3"/><text x="${p.x}" y="${p.y+7}" font-family="Outfit, Arial" font-size="20" font-weight="700" fill="#1f1f1f" text-anchor="middle" pointer-events="none">${p.id}</text></g>`).join('');
+  $('#planList').innerHTML = PINS.map(p => {
+    const st = pinSt(p);
+    let w = st==='ok'?'OK':st==='miss'?'Missing':'Reviewer', c = st;
+    if (p.id===4 && S.s1==='requested'){ w = 'Requested'; c = 'wait'; }
+    if (p.id===4 && S.s1==='received') w = 'Received';
+    return `<div class="row click ${S.planSel===p.id?'sel':''}" data-pin="${p.id}"><span class="k">${p.id}</span><div><div class="t">${p.t}</div><div class="s">To: ${p.to}</div></div><span class="st ${c}">${w}</span></div>`;
+  }).join('');
+  const p = PINS.find(x => x.id === S.planSel);
+  $('#planDetail').innerHTML = p ? `<b>${p.id}. ${p.t}.</b> ${p.why}<div class="small muted">${p.m}</div>` : '<span class="muted">Tap a pin or a row to see why it was flagged.</span>';
+  const docs = [['Application form','ok','Read'],['Drawings A-1, A-2','ok','Read'],['Site plan S-1', S.s1==='received'?'ok':S.s1==='requested'?'wait':'miss', S.s1==='received'?'Read':S.s1==='requested'?'Requested':'Missing'],['Insurance certificate','ok','Matches']];
+  $('#packet').innerHTML = docs.map(d => `<div class="doc"><span>${d[0]}</span><span class="st ${d[1]}">${d[2]}</span></div>`).join('');
+  $('#pkN').textContent = `${docs.filter(d=>d[1]==='ok').length} of 4`;
   gate();
 }
 function gate(){
-  const s = state, on = s.accepted && !s.issued && !s.sentBack;
-  $$('#gate input').forEach(i => i.disabled = !on);
   const all = $('#c1').checked && $('#c2').checked && $('#c3').checked;
-  $('#issueBtn').disabled = !on || !all;
-  $('#sendBackBtn').disabled = s.issued || s.sentBack || s.pc !== 'submitted';
-  $('#gateHint').innerHTML = s.issued ? '✓ Issued by <span class="ph">[J. Technician]</span>, a person. Permit ' + PH('[BP-2026-XXXXX]') + '.'
-    : s.sentBack ? 'Sent back by a person.'
-    : !s.accepted ? '🔒 Accept the file first.'
-    : all ? 'All confirmed. Your call.' : '🔒 The agent can\'t press these buttons.';
+  const live = S.accepted && !S.issued && !S.sentBack;
+  $$('#gate input').forEach(i => i.disabled = !live);
+  $('#issueBtn').disabled = !live || !all;
+  $('#backBtn').disabled = !live;
+  $('#issueBtn').textContent = S.issued ? 'Issued ✓' : 'Issue permit';
+  $('#gateHint').innerHTML = S.issued ? `Issued by ${PH('[J. Technician]')}. Permit no. ${PH('[BP-2026-XXXXX]')}.` : S.sentBack ? 'Sent back by a person.' : !S.accepted ? 'Accept the file first. The agent can\'t press these.' : all ? 'All confirmed. Your call.' : 'Tick all 3. The agent can\'t press these.';
 }
-document.addEventListener('change', e => { if (e.target.closest('#gate')) gate(); });
-document.addEventListener('click', e => {
-  const pin = e.target.closest('[data-pin]');
-  if (pin){ state.planSel = +pin.dataset.pin; renderCity(); }
-  if (e.target.closest('#reqS1')){
-    state.s1 = 'requested'; state.planSel = 4;
-    send('app','City of Pittsburgh','Email','Please upload sheet S-1 (site plan). It\'s listed on your drawings but missing.');
-    renderAll();
-  }
-  if (e.target.closest('#acceptBtn')){ state.accepted = true; renderAll(); }
-  if (e.target.closest('#issueBtn')){
-    state.issued = true;
-    send('app','City of Pittsburgh','Text','Permit issued. Next: film 4 short shots of the new window so the inspector can check it by video.');
-    renderAll();
-  }
-  if (e.target.closest('#sendBackBtn')){
-    state.sentBack = true;
-    send('app','City of Pittsburgh','Email','Staff sent your file back. What they need, in plain words: [staff comment]. Reply and I\'ll check your fix first.');
-    renderAll();
-  }
+$('#gate').addEventListener('change', gate);
+$('#vmToggle').addEventListener('change', e => { $('#vmLayer').style.display = e.target.checked ? '' : 'none'; });
+document.addEventListener('click', e => { const p = e.target.closest('[data-pin]'); if (p){ S.planSel = +p.dataset.pin; renderFile(); } });
+document.addEventListener('keydown', e => { const p = e.target.closest && e.target.closest('[data-pin]'); if (p && (e.key==='Enter'||e.key===' ')){ e.preventDefault(); S.planSel = +p.dataset.pin; renderFile(); } });
+$('#issueBtn').addEventListener('click', () => {
+  S.issued = true;
+  msg('app','City of Pittsburgh','Text','Permit issued. Book your site inspection when the windows are in.');
+  render();
 });
-document.addEventListener('keydown', e => {
-  const pin = e.target.closest && e.target.closest('[data-pin]');
-  if (pin && (e.key==='Enter' || e.key===' ')){ e.preventDefault(); state.planSel = +pin.dataset.pin; renderCity(); }
+$('#backBtn').addEventListener('click', () => {
+  S.sentBack = true;
+  msg('app','City of Pittsburgh','Email','Staff sent your file back: [staff comment]. Ready-Check can check your fix before you resubmit.');
+  render();
 });
 
-/* ================= INSPECTOR ================= */
-function renderInsp(){
-  const s = state;
-  const others = [['9:00 AM','[Maple Rd]','Deck footing','4 of 4'],['11:30 AM','[Birch Ct]','Egress window','2 of 4']];
-  const mine = s.booked ? `<tr class="click" id="iRow"><td><b>${s.slot.replace(/^\w+ /,'')}</b></td><td><b>${PH('[1234 Example St]')}</b></td><td>Window W-3 enlarged</td><td><span class="pill ${s.insp==='pass'?'p-ok':s.insp?'p-miss':'p-ok'}">${s.insp==='pass'?'Passed':s.insp?'Failed':'4 of 4 pre-checked'}</span></td></tr>` : '';
-  $('#iBody').innerHTML = others.map(o => `<tr><td>${o[0]}</td><td>${PH(o[1])}</td><td>${o[2]}</td><td><span class="pill ${o[3]==='4 of 4'?'p-ok':'p-eye'}">${o[3]} shots</span></td></tr>`).join('') + mine;
-  $('#iCount').textContent = 2 + (s.booked ? 1 : 0);
-  if (!s.booked){
-    $('#iDetail').innerHTML = `<div class="note">ⓘ Laurel's inspection shows up here after she films her shots and books a time in the Applicant view.</div>`;
+/* ---------- office: inspection review ---------- */
+function allFlags(){ return S.photos.flatMap(p => p ? p.flags : []); }
+function renderReview(){
+  const el = $('#cp-review');
+  if (!S.sent){
+    el.innerHTML = `<div class="eyebrow">Field inspections</div><h1>Inspection review</h1><p class="notice" style="margin-top:12px">Nothing to review yet. Photos show up here after the inspector sends them.</p>`;
     return;
   }
-  const shots = SHOTS.map((x,i) => `<div class="shot"><svg viewBox="0 30 356 300" preserveAspectRatio="xMidYMid slice">${shotSvg(i, true)[0]}</svg><div><span class="pill p-ok">✓ AI check</span><div style="margin-top:4px">${x.t}</div></div></div>`).join('');
-  $('#iDetail').innerHTML = `
-    <div class="card">
-      <div class="card-h"><h3>${PH('[1234 Example St]')} · ${s.slot}</h3><span class="muted small">Laurel ${PH('[Lastname]')}</span></div>
-      <div class="card-b"><div class="shots">${shots}</div></div>
-    </div>
-    <div class="cols" style="grid-template-columns:1fr 340px">
-      <div class="card">
-        <div class="card-h"><h3>Agent draft notes</h3><span class="pill p-eye">Draft</span></div>
-        <div class="rowi"><span class="ic ok">✓</span><div><div class="t">New unit in the enlarged opening</div><div class="src">Shot 1 · frame detected</div></div><span></span></div>
-        <div class="rowi"><span class="ic ok">✓</span><div><div class="t">Sealant continuous, no gaps</div><div class="src">Shot 2</div></div><span></span></div>
-        <div class="rowi"><span class="ic ok">✓</span><div><div class="t">Label read: U-factor 0.27, SHGC 0.30</div><div class="src">Shot 3 · re-filmed closer</div></div><span></span></div>
-        <div class="rowi"><span class="ic eye">?</span><div><div class="t">Opening about ${PH('[24 in]')} wide. Check egress size on the call.</div><div class="src">Shot 4 · measured by vision, needs a person</div></div><span></span></div>
+  const flags = allFlags();
+  const done = flags.filter(f => S.verdicts[f.id]).length;
+  const order = [0,1,2,3].sort((a,b) => (S.photos[b].flags.length - S.photos[a].flags.length) || a - b);
+  if (S.revSel === null) S.revSel = order[0];
+  const ph = S.photos[S.revSel];
+  const fixes = flags.filter(f => S.verdicts[f.id] === 'fix').length;
+  const clean = 4 - new Set(flags.map(f => f.shot)).size;
+  el.innerHTML = `
+    <div class="crumbs"><button data-back>Application queue</button> › Inspection review</div>
+    <div><div class="eyebrow">Window W-3 · site inspection · ${S.slot}</div><h1>${PH('[1234 Example St]')}</h1></div>
+    <div class="rec ${flags.length?'':'good'}"><div><div class="lbl">Agent summary</div><h2>${flags.length ? `${flags.length} flag${flags.length>1?'s':''} to check. ${clean} photo${clean===1?'':'s'} clean.` : 'No flags. All 4 photos clean.'}</h2><p>Flagged photos are listed first. A recommendation, not a decision.</p></div><div class="mono small">${done} of ${flags.length} checked</div></div>
+    <div class="grid2" style="grid-template-columns:minmax(0,1fr) 320px">
+      <div class="stack">
+        <div class="card"><table class="q"><thead><tr><th>Photo</th><th>Photo quality</th><th>Flags</th></tr></thead><tbody>
+          ${order.map(i => { const p = S.photos[i], open = p.flags.filter(f => !S.verdicts[f.id]).length;
+            return `<tr class="click ${i===S.revSel?'on':''}" data-rev="${i}"><td>${i+1}. ${SHOTS[i].name}</td><td><span class="st ${p.pass?'ok':'flag'}">${p.pass?'Good':'Low'}</span></td><td>${p.flags.length ? `<span class="st ${open?'flag':'ok'}">${open ? open + ' to check' : 'Checked'}</span>` : '<span class="small muted">None</span>'}</td></tr>`; }).join('')}
+        </tbody></table></div>
+        <div class="card">
+          <div class="card-h"><h3>${S.revSel+1}. ${SHOTS[S.revSel].name}</h3><span class="small muted">${ph.time} ${PH('[sim]')}</span></div>
+          <div class="photo">${ph.img ? `<img src="${ph.img}" alt="Inspector photo ${S.revSel+1}">` : `<div class="notice" style="position:absolute;inset:auto 12px 12px 12px">Sample photo: boxes only</div>`}${boxesSvg(ph)}</div>
+          <div class="vm">${detTable(ph.dets)}</div>
+          ${ph.reads.map(r => `<div class="pipe"><span class="k">AI</span><div><b>${r[0]}</b> ${fmt(r[1])}</div></div>`).join('')}
+          ${ph.flags.map(f => `<div class="card-b flagbox"><span class="st flag">Flag · confidence ${f.conf.toFixed(2)}</span><div style="font-weight:600;margin-top:4px">${fmt(f.text)}</div><div class="small muted">${fmt(f.why)}</div>
+            <div class="flagq"><button class="btn sm ${S.verdicts[f.id]==='ok'?'on':''}" data-verdict="${f.id}" data-v="ok" ${S.final?'disabled':''}>Looks fine</button><button class="btn sm ${S.verdicts[f.id]==='fix'?'on':''}" data-verdict="${f.id}" data-v="fix" ${S.final?'disabled':''}>Needs a fix</button></div></div>`).join('')}
+          ${ph.note ? `<div class="card-b flagbox small"><b>Inspector note:</b> ${ph.note.replace(/</g,'&lt;')}</div>` : ''}
+        </div>
       </div>
-      <div class="card">
-        <div class="card-h"><h3>Your decision</h3><span class="pill p-info">Person only</span></div>
-        <div class="card-b" style="display:flex;flex-direction:column;gap:10px">
-          ${s.insp ? `<div class="result ${s.insp==='pass'?'ok':'miss'}">${s.insp==='pass'?'Passed':'Failed'}</div><p class="small muted">Decided by ${PH('[R. Inspector]')}. The agent tells Laurel what's next.</p>`
-            : `<p class="small muted">The agent drafts notes. You decide.</p><button class="btn primary block" id="passBtn">Pass</button><button class="btn block" id="failBtn">Fail</button>`}
+      <div class="stack">
+        <div class="card">
+          <div class="card-h"><h3>Sign-off</h3><span class="st info">Person only</span></div>
+          <div class="card-b stack" style="gap:8px">
+            <p class="small muted">${S.final ? `Decided by ${PH('[J. Reviewer]')}.` : done < flags.length ? `Check ${flags.length-done} more flag${flags.length-done>1?'s':''} first.` : fixes ? `${fixes} flag${fixes>1?'s':''} marked "needs a fix". Your call.` : 'All flags checked. Your call.'}</p>
+            <button class="btn primary block" data-final="approve" ${done<flags.length||S.final?'disabled':''}>${S.final==='approve'?'Approved ✓':'Approve inspection'}</button>
+            <button class="btn block" data-final="fix" ${done<flags.length||S.final?'disabled':''}>${S.final==='fix'?'Correction sent ✓':'Send correction notice'}</button>
+          </div>
+        </div>
+        <div class="card"><div class="card-h"><h3>How photos were checked</h3></div>
+          <div class="pipe"><span class="k">1</span><div><b>On-device detector</b> ${PH('[e.g. YOLO-class model]')}<div class="small muted">Live boxes in the inspector's camera.</div></div></div>
+          <div class="pipe"><span class="k">2</span><div><b>Vision language model</b> ${PH('[e.g. Claude]')}<div class="small muted">Reads the label and the tape. Writes each flag.</div></div></div>
+          <div class="pipe"><span class="k">3</span><div><b>Rules</b><div class="small muted">Compares readings to code ${PH('[confirm sections]')}.</div></div></div>
+          <div class="pipe" style="border-bottom:none"><span class="k">!</span><div class="small muted">Under ${THR.toFixed(2)}, or close to a code limit, becomes a flag.</div></div>
         </div>
       </div>
     </div>`;
+  $$('[data-rev]', el).forEach(tr => tr.addEventListener('click', () => { S.revSel = +tr.dataset.rev; renderReview(); }));
+  $$('[data-verdict]', el).forEach(b => b.addEventListener('click', () => {
+    S.verdicts[b.dataset.verdict] = b.dataset.v;
+    /* when this photo is done, jump to the next photo with an open flag */
+    if (!S.photos[S.revSel].flags.some(f => !S.verdicts[f.id])){ const nx = order.find(i => S.photos[i].flags.some(f => !S.verdicts[f.id])); if (nx !== undefined) S.revSel = nx; }
+    renderReview();
+  }));
+  $$('[data-back]', el).forEach(b => b.addEventListener('click', () => { S.cpage = 'queue'; renderCity(); renderGuide(); }));
+  $$('[data-final]', el).forEach(b => b.addEventListener('click', () => {
+    S.final = b.dataset.final;
+    const fixList = flags.filter(f => S.verdicts[f.id]==='fix').map(f => f.short).join('; ');
+    msg('app','City of Pittsburgh','Email', S.final==='approve' ? 'Your window inspection was approved. Upload 1 close-out document to finish.' : `Your inspection needs a correction: ${fixList || '[reviewer note]'}. Ready-Check can help you book a re-check.`);
+    msg('insp','City office','Dashboard', `Office ${S.final==='approve'?'approved':'sent a correction for'} [1234 Example St].`);
+    render();
+  }));
 }
-document.addEventListener('click', e => {
-  const b = e.target.closest('#passBtn, #failBtn'); if (!b || state.insp) return;
-  state.insp = b.id === 'passBtn' ? 'pass' : 'fail';
-  send('app','City of Pittsburgh','Email', state.insp==='pass' ? 'Passed! Upload 1 close-out document to finish.' : 'The inspector found something to fix: [inspector note]. I\'ll help you book a re-check.');
-  renderAll();
-});
 
-/* ================= Init ================= */
-function renderAll(){ phone(); renderApp(); renderCity(); renderInsp(); renderMsgs(); renderGuide(); }
-$('#resetBtn').addEventListener('click', () => {
-  state = fresh(); $$('#gate input').forEach(i => i.checked = false); renderAll(); show('app');
-});
-renderAll();
-let start = 'app';
-try { const v = localStorage.getItem('rc-view'); if (['app','city','insp'].includes(v)) start = v; } catch(e){}
-show(start);
+/* ======================= INSPECTOR (FIELD) ======================= */
+/* Each shot names what the vision check must find, and how big it must be in frame (half-frame units). */
+const SHOTS = [
+  {name:'Whole window, outside', aim:'frame', need:[['frame',0.34]], tip:'Get all of W-3 in frame.'},
+  {name:'Sill and sealant', aim:'sill', need:[['sill',0.5],['sealant',0.45]], tip:'Get close to the bottom of the frame.'},
+  {name:'Manufacturer label', aim:'label', need:[['label',0.2]], tip:'Sticker in the top left of the glass.'},
+  {name:'Clear opening with tape', aim:'tape', need:[['opening',0.45],['tape',0.45]], tip:'Show the open sash and the tape.'},
+];
+const OBJNAME = {frame:'window frame', sill:'sill', sealant:'sealant bead', label:'manufacturer label', opening:'clear opening', tape:'tape measure'};
+
+function renderInsp(){
+  const visits = [['8:00','[Maple Rd]'], [S.booked ? S.slot.split(' ')[1].split('-')[0] : '—', '[1234 Example St]'], ['2:30','[Elm St]']];
+  $('#iDay').innerHTML = visits.map((v,i) => `<button class="nav" aria-current="${i===1}"><span>${v[0]} · ${v[1]}</span></button>`).join('');
+  const el = $('#iContent');
+  if (!S.booked){
+    Field.detach();
+    el.innerHTML = `<div class="eyebrow">Field inspection</div><h1>Window W-3</h1><p class="notice" style="margin-top:12px">Laurel hasn't booked yet. Her visit shows up here after she books in the Applicant view. To skip ahead, use "Jump to step" above.</p>`;
+    return;
+  }
+  if (!el.querySelector('#vf')){
+    el.innerHTML = `
+      <div><div class="eyebrow">Field inspection · ${S.slot} · ${PH('[1234 Example St]')}</div><h1>Window W-3, enlarged opening</h1></div>
+      <div class="field">
+        <div>
+          <div class="vf" id="vf">
+            <canvas id="cv"></canvas>
+            <svg class="ov" id="ov" viewBox="0 0 1000 750" preserveAspectRatio="none"></svg>
+            <div class="corner c1"></div><div class="corner c2"></div><div class="corner c3"></div><div class="corner c4"></div>
+            <div class="tl" id="vfTl"></div>
+            <div class="hud"><span id="hud">Loading the 3D site…</span></div>
+            <div class="flash" id="flash"></div>
+            <div class="fallback" id="fallback" hidden><b>The 3D view couldn't start on this device.</b><span class="small muted">WebGL is off or not supported.</span><button class="btn primary" id="useSample">Use sample photos instead</button></div>
+          </div>
+          <div class="ctrl">
+            <button class="btn sm" id="back">− Step back</button>
+            <button class="btn sm" id="closer">+ Step closer</button>
+            <button class="btn gold" id="snap">Take photo</button>
+            <span class="help">Drag to look around · scroll to move</span>
+          </div>
+          <div class="thumbs" id="thumbs"></div>
+        </div>
+        <div class="stack">
+          <div class="card"><div class="card-h"><h3>Shot list</h3><span class="small muted">${PH('[confirm with the City]')}</span></div><div id="shotList"></div></div>
+          <div class="card vm"><div class="card-h"><h3>Vision check, live</h3><span class="small muted" id="vmShot"></span></div><div id="vmLive"></div><div class="pipe" style="border-bottom:none"><span class="k">!</span><div class="small muted">The score comes from what is really in frame: how much of the object shows, how big it is, and the angle. Under ${THR.toFixed(2)} means retake. ${PH('[simulated model]')}</div></div></div>
+          <div class="card" id="sendCard"></div>
+        </div>
+      </div>`;
+    $('#closer').addEventListener('click', () => Field.dolly(0.75));
+    $('#back').addEventListener('click', () => Field.dolly(1.33));
+    $('#snap').addEventListener('click', () => Field.snap());
+    $('#useSample').addEventListener('click', () => { demoPhotos(); renderShotList(); });
+    Field.attach($('#vf'), $('#cv'));
+  }
+  renderShotList();
+}
+function renderShotList(){
+  const sl = $('#shotList'); if (!sl) return;
+  sl.innerHTML = SHOTS.map((s,i) => { const p = S.photos[i];
+    const st = p ? (p.pass ? ['ok','Good'] : ['flag','Low']) : i===S.shot ? ['info','Now'] : ['wait',''];
+    return `<div class="row click ${i===S.shot?'sel':''}" data-shot="${i}"><span class="k">${i+1}</span><div><div class="t">${s.name}</div><div class="s">${s.tip}</div></div><span class="st ${st[0]}">${st[1]}</span></div>`; }).join('');
+  $$('[data-shot]', sl).forEach(r => r.addEventListener('click', () => { S.shot = +r.dataset.shot; Field.aimAt(SHOTS[S.shot].aim); renderShotList(); }));
+  $('#vmShot').textContent = `shot ${S.shot+1} of 4`;
+  $('#thumbs').innerHTML = S.photos.map((p,i) => `<button class="thumb ${p && i===S.thumbSel?'sel':''}" data-thumb="${i}" ${p?'':'disabled'}><div class="im">${p&&p.img?`<img src="${p.img}" alt="Photo ${i+1}">`:''}${p?boxesSvg(p):''}</div><div class="cap">${i+1}. ${p ? `<span class="st ${p.pass?'ok':'flag'}">${p.pass?'Good':'Low'}</span>` : '<span class="muted">not taken</span>'}</div></button>`).join('');
+  $$('[data-thumb]').forEach(b => b.addEventListener('click', () => { S.shot = S.thumbSel = +b.dataset.thumb; Field.aimAt(SHOTS[S.shot].aim); renderShotList(); }));
+  const n = S.photos.filter(Boolean).length, flags = allFlags().length;
+  $('#snap').disabled = S.sent;
+  $('#sendCard').innerHTML = S.sent
+    ? `<div class="card-b"><h3>Sent to the office</h3><p class="small muted">${S.final ? 'The office has decided.' : 'A person reviews the flags and signs off.'}</p></div>`
+    : `<div class="card-h"><h3>Send to office</h3><span class="small muted">${n} of 4 photos</span></div><div class="card-b stack" style="gap:8px">
+        <textarea id="note" rows="2" placeholder="Note for the office (optional)" style="width:100%;border:1px solid var(--line);padding:8px;font-size:14px"></textarea>
+        <p class="small muted">${n<4 ? 'Take all 4 photos first.' : flags ? `The vision check raised ${flags} flag${flags>1?'s':''}. The office sees ${flags>1?'them':'it'} first.` : 'No flags.'} You don't pass or fail here.</p>
+        <button class="btn primary block" id="sendBtn" ${n<4?'disabled':''}>Send to office</button></div>`;
+  const nt = $('#note'); if (nt){ nt.value = S.note; nt.addEventListener('input', e => S.note = e.target.value); }
+  const sb = $('#sendBtn'); if (sb) sb.addEventListener('click', () => {
+    S.sent = true; if (S.note) S.photos[3].note = S.note;
+    msg('city','Ready-Check','Review',`Inspection photos in for [1234 Example St]: ${allFlags().length} flags to check.`);
+    msg('app','Ready-Check','Text','The inspector finished. A person at the office reviews the photos next.');
+    render();
+  });
+}
+
+/* ---- display helpers ---- */
+function detTable(dets){
+  return `<table><thead><tr><th>Found</th><th>Score</th><th></th></tr></thead><tbody>${dets.map(d => {
+    const ok = d.conf >= THR;
+    return `<tr><td>${OBJNAME[d.key]||d.key}</td><td class="c"><span class="bar"><i style="width:${Math.round(d.conf*100)}%;background:${ok?'#3fb673':'#f8bd32'}"></i></span>${d.conf.toFixed(2)}</td><td class="small" style="color:${ok?'var(--green)':'var(--gold-dk)'};font-weight:600">${ok?'OK':(d.hint||'Retake')}</td></tr>`; }).join('')}</tbody></table>`;
+}
+function boxesSvg(p){
+  const r = (b, c, w, dash) => `<rect x="${b[0]*1000}" y="${b[1]*750}" width="${(b[2]-b[0])*1000}" height="${(b[3]-b[1])*750}" fill="none" stroke="${c}" stroke-width="${w}" ${dash?'stroke-dasharray="14 8"':''}/>`;
+  return `<svg viewBox="0 0 1000 750" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%">${p.dets.filter(d=>d.box).map(d => r(d.box, d.conf>=THR?'#3fb673':'#f8bd32', 4)).join('')}${p.flags.filter(f=>f.box).map(f => r(f.box,'#f8bd32',6,true)).join('')}</svg>`;
+}
+
+/* ---- what the vision language model reads, and the flags it raises (simulated, deterministic) ---- */
+function analyse(i, dets){
+  const reads = [], flags = [], get = k => dets.find(d => d.key === k);
+  dets.filter(d => d.conf < THR).forEach(d => flags.push({id:`q${i}${d.key}`, shot:i, conf:d.conf, text:`Photo quality: ${OBJNAME[d.key]} scored ${d.conf.toFixed(2)}`, why:'The model is unsure what it sees. Look at the photo yourself.', short:`retake photo ${i+1}`, box:d.box}));
+  const se = get('sealant');
+  if (i === 1 && se && se.conf >= 0.5 && se.box){
+    const b = se.box, w = b[2]-b[0], h = b[3]-b[1];
+    flags.push({id:'gap', shot:1, conf:0.74, text:'Possible gap in the sealant at the left corner', why:'Could be a real gap or a shadow. Under 0.80, so a person checks.', short:'seal the gap at the left corner of the sill', box:[b[0]-0.01, b[1]-h*1.5, b[0]+w*0.16, b[3]+h*1.5]});
+  }
+  const lb = get('label');
+  if (i === 2 && lb && lb.conf >= THR) reads.push(['Label read:', 'U-factor 0.27, SHGC 0.30. Within the limit [energy code limit, confirm].']);
+  const tp = get('tape');
+  if (i === 3 && tp && tp.conf >= 0.5){
+    reads.push(['Tape read:', 'clear opening about 24.5 in wide by 34 in high, 5.78 sq ft.']);
+    const op = get('opening');
+    flags.push({id:'egress', shot:3, conf:0.81, text:'Clear opening is close to the emergency escape minimum', why:'Read 5.78 sq ft vs a 5.7 sq ft minimum [IRC R310, confirm]. A tape read can be off by about half an inch, about 0.2 sq ft here.', short:'re-measure the W-3 clear opening', box:op && op.box});
+  }
+  return {reads, flags};
+}
+function demoPhotos(){
+  const B = {frame:[.3,.1,.7,.9], sill:[.1,.52,.9,.72], sealant:[.12,.46,.88,.54], label:[.3,.28,.7,.7], opening:[.16,.3,.84,.88], tape:[.14,.55,.86,.64]};
+  SHOTS.forEach((s,i) => {
+    const dets = s.need.map(([k]) => ({key:k, conf:+(0.86 + 0.02*i).toFixed(2), box:B[k]}));
+    const a = analyse(i, dets);
+    S.photos[i] = {img:null, dets, pass:true, reads:a.reads, flags:a.flags, time:'Thu 9:4'+i+' AM', note:''};
+  });
+}
+
+/* ======================= THREE.JS FIELD SCENE ======================= */
+const Field = (() => {
+  let renderer = null, scene = null, camera = null, wrap = null, canvas = null, raf = null;
+  const OBJ = {};
+  const tgt = {x:0,y:1.55,z:0}, cur = {x:0,y:1.55,z:0};
+  let yaw = .35, pitch = .06, dist = 7, yawT = .35, pitchT = .06, dT = 7, lastLive = 0, liveDets = [];
+  /* starting views are a little too far on purpose, so the live check asks to move closer */
+  const AIMS = {
+    frame:{p:[0,1.55,0], d:6.5, yaw:.38, pitch:.06},
+    sill:{p:[0,.97,.15], d:2.3, yaw:-.25, pitch:.38},
+    label:{p:[-.27,2.0,.04], d:1.0, yaw:.2, pitch:0},
+    tape:{p:[0,1.24,.06], d:2.0, yaw:-.15, pitch:.05},
+  };
+  const tex = (w,h,draw) => { const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h); const t = new THREE.CanvasTexture(c); t.anisotropy = 4; return t; };
+  const lam = c => new THREE.MeshLambertMaterial({color:c});
+  function box(w,h,d,mat,x,y,z){ const m = new THREE.Mesh(new THREE.BoxGeometry(w,h,d), typeof mat === 'number' ? lam(mat) : mat); m.position.set(x,y,z); scene.add(m); return m; }
+  function build(){
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xcfdbe8);
+    scene.fog = new THREE.Fog(0xcfdbe8, 16, 40);
+    scene.add(new THREE.HemisphereLight(0xffffff, 0x7a8a6a, .85));
+    const sun = new THREE.DirectionalLight(0xffffff, .6); sun.position.set(4,8,6); scene.add(sun);
+    const g = new THREE.Mesh(new THREE.PlaneGeometry(60,60), lam(0x8fa27a)); g.rotation.x = -Math.PI/2; scene.add(g);
+    const path = new THREE.Mesh(new THREE.PlaneGeometry(1.3,9), lam(0xb9b2a5)); path.rotation.x = -Math.PI/2; path.position.set(-1.6,.01,4.5); scene.add(path);
+    const siding = tex(512,512,(c,w,h) => { c.fillStyle = '#e7e1d4'; c.fillRect(0,0,w,h); c.strokeStyle = '#c6bdab'; c.lineWidth = 3; for (let y=0;y<h;y+=32){ c.beginPath(); c.moveTo(0,y); c.lineTo(w,y); c.stroke(); } });
+    siding.wrapS = siding.wrapT = THREE.RepeatWrapping; siding.repeat.set(3,2);
+    const wm = new THREE.MeshLambertMaterial({map:siding});
+    // wall in 4 pieces around the W-3 opening (x -0.45..0.45, y 0.95..2.15)
+    box(3.55,3.2,.3,wm,-2.225,1.6,-.15); box(3.55,3.2,.3,wm,2.225,1.6,-.15); box(.9,.95,.3,wm,0,.475,-.15); box(.9,1.05,.3,wm,0,2.675,-.15);
+    box(8.4,.25,.5,0x5a5f66,0,3.25,-.05); box(8.4,.35,.34,0x9b958a,0,.17,-.12);
+    for (const x of [-2.6, 2.6]){ box(.9,1.2,.04,0x6f8fb3,x,1.65,.02); box(1.04,.07,.08,0xf4f2ee,x,2.28,.03); box(1.04,.07,.08,0xf4f2ee,x,1.02,.03); box(.07,1.3,.08,0xf4f2ee,x-.485,1.65,.03); box(.07,1.3,.08,0xf4f2ee,x+.485,1.65,.03); }
+    // dark room behind the opening
+    box(1.2,1.4,.05,0x2a2e33,0,1.55,-.95); box(1.2,.05,.95,0x3a3f45,0,.95,-.5); box(1.2,.05,.95,0x3a3f45,0,2.15,-.5); box(.05,1.2,.95,0x3a3f45,-.6,1.55,-.5); box(.05,1.2,.95,0x3a3f45,.6,1.55,-.5);
+    // W-3: frame, sill, upper sash (lower sash raised, so the bottom half is the clear opening)
+    const F = 0xf7f6f2;
+    box(1.04,.08,.14,F,0,2.19,.04); box(.08,1.28,.14,F,-.48,1.55,.04); box(.08,1.28,.14,F,.48,1.55,.04);
+    box(1.16,.06,.32,0xdedad0,0,.92,.12);
+    const glass = new THREE.MeshLambertMaterial({color:0x8fb3d9, transparent:true, opacity:.78});
+    box(.88,.58,.02,glass,0,1.86,.02); box(.92,.05,.06,F,0,1.56,.03);
+    const lt = tex(256,160,(c,w,h) => { c.fillStyle = '#fbfaf6'; c.fillRect(0,0,w,h); c.fillStyle = '#233b77'; c.fillRect(0,0,w,28); c.fillStyle = '#fff'; c.font = 'bold 18px Arial'; c.fillText('ENERGY RATING', 10, 20); c.fillStyle = '#1f1f1f'; c.font = 'bold 30px Arial'; c.fillText('U-0.27', 12, 70); c.fillText('SHGC 0.30', 12, 110); c.font = '16px Arial'; c.fillText('[MFR] MODEL 2440', 12, 146); });
+    const lab = new THREE.Mesh(new THREE.PlaneGeometry(.15,.094), new THREE.MeshBasicMaterial({map:lt})); lab.position.set(-.27,2.0,.035); scene.add(lab);
+    // sealant bead: sill run starts 8 cm in from the left jamb, leaving a gap
+    const SE = 0x66645f;
+    box(.86,.022,.03,SE,.06,.965,.115); box(.022,1.2,.03,SE,-.53,1.58,.11); box(.022,1.25,.03,SE,.53,1.55,.11);
+    // tape measure across the clear opening
+    const tt = tex(512,32,(c,w,h) => { c.fillStyle = '#f2c230'; c.fillRect(0,0,w,h); c.fillStyle = '#1f1f1f'; for (let i=0;i<=48;i++){ const x = 8 + i*(w-16)/48; c.fillRect(x,0,2,i%4===0?16:9); if (i%4===0){ c.font = '10px Arial'; c.fillText(String(i/2), x+3, 28); } } });
+    const side = lam(0xd9a91e), face = new THREE.MeshBasicMaterial({map:tt});
+    const tape = new THREE.Mesh(new THREE.BoxGeometry(.86,.035,.006), [side,side,side,side,face,side]); tape.position.set(0,1.28,.06); scene.add(tape);
+    box(.08,.08,.05,0xc0392b,.47,1.28,.07);
+    for (const [x,z] of [[-1.3,.7],[1.5,.8],[3.6,.9]]){ const s = new THREE.Mesh(new THREE.SphereGeometry(.55,12,10), lam(0x5d7a4a)); s.position.set(x,.42,z); s.scale.y = .75; scene.add(s); }
+    // what the detector looks for: a box and the direction it faces
+    const B = (a,b,c,d,e,f) => new THREE.Box3(new THREE.Vector3(a,b,c), new THREE.Vector3(d,e,f)), N = new THREE.Vector3(0,0,1);
+    OBJ.frame = {box:B(-.52,.89,0,.52,2.23,.12), n:N};
+    OBJ.sill = {box:B(-.58,.89,0,.58,.95,.28), n:new THREE.Vector3(0,.6,.8).normalize()};
+    OBJ.sealant = {box:B(-.54,.954,.1,.54,.976,.13), n:N};
+    OBJ.label = {box:B(-.345,1.953,.03,-.195,2.047,.04), n:N};
+    OBJ.opening = {box:B(-.44,.95,-.1,.44,1.53,.05), n:N};
+    OBJ.tape = {box:B(-.43,1.262,.05,.43,1.298,.07), n:N};
+  }
+  let lastW = 0;
+  function size(){ if (!renderer || !wrap) return; const w = wrap.clientWidth; if (!w) return; lastW = w; const h = Math.round(w*3/4); renderer.setSize(w, h, false); camera.aspect = w/h; camera.updateProjectionMatrix(); }
+  function place(){
+    const k = .15;
+    cur.x += (tgt.x-cur.x)*k; cur.y += (tgt.y-cur.y)*k; cur.z += (tgt.z-cur.z)*k;
+    dist += (dT-dist)*k; yaw += (yawT-yaw)*k; pitch += (pitchT-pitch)*k;
+    const cp = Math.cos(pitch);
+    camera.position.set(cur.x + dist*Math.sin(yaw)*cp, Math.max(.25, cur.y + dist*Math.sin(pitch)), Math.max(.12, cur.z + dist*Math.cos(yaw)*cp));
+    camera.lookAt(cur.x, cur.y, cur.z);
+    camera.updateMatrixWorld();
+  }
+  /* Simulated detector: project the object's 3D box into the photo and score coverage, size and angle. */
+  function detect(key, minSize){
+    const o = OBJ[key], b = o.box;
+    let behind = false, x0 = 9, y0 = 9, x1 = -9, y1 = -9;
+    for (const x of [b.min.x,b.max.x]) for (const y of [b.min.y,b.max.y]) for (const z of [b.min.z,b.max.z]){
+      const p = new THREE.Vector3(x,y,z);
+      if (p.clone().applyMatrix4(camera.matrixWorldInverse).z > -.05) behind = true;
+      p.project(camera); x0 = Math.min(x0,p.x); x1 = Math.max(x1,p.x); y0 = Math.min(y0,p.y); y1 = Math.max(y1,p.y);
+    }
+    if (behind) return {key, conf:0, box:null, hint:'Not in view'};
+    const area = Math.max(1e-6, (x1-x0)*(y1-y0));
+    const cx0 = Math.max(-1,x0), cx1 = Math.min(1,x1), cy0 = Math.max(-1,y0), cy1 = Math.min(1,y1);
+    const vis = (cx1>cx0 && cy1>cy0) ? (cx1-cx0)*(cy1-cy0)/area : 0;
+    if (vis <= 0) return {key, conf:0, box:null, hint:'Turn toward it'};
+    const sz = Math.max((x1-x0)/2, (y1-y0)/2);
+    const sizeF = Math.min(1, Math.max(0, (sz - minSize*.35) / (minSize*.65)));
+    const c = b.getCenter(new THREE.Vector3()), toCam = camera.position.clone().sub(c).normalize();
+    const angF = Math.min(1, Math.max(0, (toCam.dot(o.n) - .35) / .5));
+    let conf = .97 * Math.pow(vis,3) * sizeF * (.55 + .45*angF);
+    conf = Math.max(0, Math.min(.99, conf + .006*Math.sin(performance.now()/300 + key.length)));
+    const hint = vis < .9 ? (sz > minSize*1.4 ? 'Step back' : 'Turn toward it') : sizeF < 1 ? 'Move closer' : angF < .75 ? 'Face it straight on' : '';
+    return {key, conf:+conf.toFixed(2), box:[(cx0+1)/2, (1-cy1)/2, (cx1+1)/2, (1-cy0)/2], hint};
+  }
+  function liveCheck(){
+    liveDets = SHOTS[S.shot].need.map(([k,m]) => detect(k,m));
+    const ov = $('#ov'); if (!ov) return;
+    ov.innerHTML = liveDets.filter(d => d.box && d.conf > .05).map(d => {
+      const [a,b,c,e] = d.box, col = d.conf >= THR ? '#3fb673' : '#f8bd32', ly = b*750 > 34 ? b*750-6 : e*750+24, label = `${OBJNAME[d.key]} ${d.conf.toFixed(2)}`;
+      return `<rect x="${a*1000}" y="${b*750}" width="${(c-a)*1000}" height="${(e-b)*750}" fill="none" stroke="${col}" stroke-width="4"/><rect x="${Math.min(a*1000, 1000-label.length*11-12)}" y="${ly-21}" width="${label.length*11+12}" height="27" fill="${col}"/><text x="${Math.min(a*1000, 1000-label.length*11-12)+6}" y="${ly-1}" font-family="Roboto Mono, monospace" font-size="18" fill="#111">${label}</text>`;
+    }).join('');
+    const worst = liveDets.slice().sort((a,b) => a.conf-b.conf)[0], good = liveDets.every(d => d.conf >= THR);
+    const hud = $('#hud'); hud.className = good ? 'good' : '';
+    hud.textContent = good ? 'Looks good. Take the photo.' : `${worst.hint || 'Hold steady'}: ${OBJNAME[worst.key]}`;
+    $('#vfTl').textContent = `SHOT ${S.shot+1}/4 · ${SHOTS[S.shot].name.toUpperCase()}`;
+    const vm = $('#vmLive'); if (vm) vm.innerHTML = detTable(liveDets);
+  }
+  function loop(t){
+    raf = requestAnimationFrame(loop);
+    if (!wrap || !wrap.isConnected) return detach();
+    if (S.view !== 'insp') return;
+    if (wrap.clientWidth !== lastW) size();
+    if (!lastW) return;
+    place(); renderer.render(scene, camera);
+    if (t - lastLive > 140){ lastLive = t; liveCheck(); }
+  }
+  let drag = null;
+  const onDown = e => { drag = {x:e.clientX, y:e.clientY, yaw:yawT, pitch:pitchT}; try { wrap.setPointerCapture(e.pointerId); } catch(_){} };
+  const onMove = e => { if (!drag) return; const k = 3 / wrap.clientWidth; yawT = Math.max(-1.15, Math.min(1.15, drag.yaw - (e.clientX-drag.x)*k)); pitchT = Math.max(-.25, Math.min(.8, drag.pitch + (e.clientY-drag.y)*k)); };
+  const onUp = () => { drag = null; };
+  const onWheel = e => { e.preventDefault(); dolly(e.deltaY > 0 ? 1.12 : .89); };
+  function dolly(f){ dT = Math.max(.25, Math.min(10, dT*f)); }
+  function aimAt(k){ const a = AIMS[k]; tgt.x = a.p[0]; tgt.y = a.p[1]; tgt.z = a.p[2]; dT = a.d; yawT = a.yaw; pitchT = a.pitch; }
+  function attach(w, c){
+    detach();
+    wrap = w; canvas = c;
+    try {
+      if (typeof THREE === 'undefined') throw new Error('three.js did not load');
+      renderer = new THREE.WebGLRenderer({canvas, antialias:true, preserveDrawingBuffer:true});
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      camera = new THREE.PerspectiveCamera(55, 4/3, .05, 100);
+      if (!scene) build();
+    } catch (e){ console.warn(e); renderer = null; $('#fallback').hidden = false; $('#hud').textContent = '3D view unavailable'; return; }
+    aimAt(SHOTS[S.shot].aim); cur.x = tgt.x; cur.y = tgt.y; cur.z = tgt.z; dist = dT; yaw = yawT; pitch = pitchT;
+    size();
+    wrap.addEventListener('pointerdown', onDown); wrap.addEventListener('pointermove', onMove);
+    wrap.addEventListener('pointerup', onUp); wrap.addEventListener('pointercancel', onUp);
+    wrap.addEventListener('wheel', onWheel, {passive:false});
+    window.addEventListener('resize', size);
+    raf = requestAnimationFrame(loop);
+  }
+  function detach(){
+    if (raf) cancelAnimationFrame(raf); raf = null;
+    window.removeEventListener('resize', size);
+    if (renderer){ renderer.dispose(); renderer = null; }
+    wrap = null; lastW = 0;
+  }
+  function snap(){
+    if (!renderer || S.sent) return;
+    place(); renderer.render(scene, camera); liveCheck();
+    const img = canvas.toDataURL('image/jpeg', .82);
+    const dets = liveDets.map(d => Object.assign({}, d)), a = analyse(S.shot, dets);
+    S.photos[S.shot] = {img, dets, pass:dets.every(d => d.conf >= THR), reads:a.reads, flags:a.flags, time:'Thu 9:4' + S.shot + ' AM', note:''};
+    S.thumbSel = S.shot;
+    const f = $('#flash'); f.classList.add('on'); setTimeout(() => f.classList.remove('on'), 60);
+    const next = S.photos.findIndex(p => !p);
+    if (S.photos[S.shot].pass && next >= 0){ S.shot = next; aimAt(SHOTS[next].aim); }
+    renderShotList();
+  }
+  return {attach, detach, snap, dolly, aimAt};
+})();
+
+go('app');
 })();
 </script>
 </body>
