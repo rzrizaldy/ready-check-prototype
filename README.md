@@ -2,16 +2,15 @@
 
 Clickable prototype of an AI agent for City of Pittsburgh Permits, Licenses, and Inspections. CMU Design of AI Products & Systems, P4.
 
-**Story:** Laurel replaces her windows.
+**The agent checks. A person decides.** Laurel replaces her windows, told in 4 chapters:
 
-| Screen | Who | What happens |
-|---|---|---|
-| RC-1 Pre-check | Laurel | "Is my application ready?" 1 item to fix |
-| RC-2 Plan read | Technician | Agent pins findings on the drawing. Request S-1 / Accept |
-| RC-3 Staff queue | City staff | Only a person can press "Issue permit" |
-| RC-4 Video check | Laurel, inspector | Computer vision boxes, "Move closer", inspector passes or fails |
-| RC-5 Agent messages | Everyone | Proactive messages and log |
+| Chapter | Who | Agent does | Person decides |
+|---|---|---|---|
+| 01 Apply | Applicant | Checks 5 items before submit | Laurel fixes and submits |
+| 02 Review | City office | Reads the drawings, flags 1 unsure item | Reviewer checks it, issues the permit |
+| 03 Inspect | Inspector | Scores each photo live in a 3D site (three.js) | Inspector takes the photos |
+| 04 Decide | City office | Flags only what it isn't sure about | Reviewer decides each flag, signs off |
 
-All data is simulated. Dotted underlines mark placeholders.
+Press **Auto-play** for a 1-minute run that clicks through everything. The previous version is in `v3/`.
 
-Run: open `index.html` in a browser. No build step.
+All names, scores and code limits are simulated. Run: open `index.html` in a browser. No build step.
